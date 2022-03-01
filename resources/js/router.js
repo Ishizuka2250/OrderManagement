@@ -1,7 +1,7 @@
 import Vue  from "vue";
 import VueRouter from "vue-router";
 import Login from "./views/Login";
-import Admin from "./views/WaitingNoControll";
+import Admin from "./views/Admin";
 import Waiting from "./views/WaitingNoList";
 Vue.use(VueRouter);
 
