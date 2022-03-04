@@ -4,14 +4,15 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 
-require('./bootstrap');
+require('./bootstrap')
 
-import Vue from 'vue';
-import VueRouter from 'vue-router';
-import router from './router';
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+import router from './router'
+import store from './store'
 
-window.Vue = require('vue').default;
-Vue.use(VueRouter);
+window.Vue = require('vue').default
+Vue.use(VueRouter)
 
 /**
  * The following block of code may be used to automatically register your
@@ -34,5 +35,6 @@ Vue.use(VueRouter);
 
 const app = new Vue({
     el: '#app',
-    router
-});
+    router,
+    store,
+})

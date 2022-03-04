@@ -7,17 +7,17 @@
           <button class="button">更新</button>
           <button v-on:click="reset" class="button">リセット</button>
           <button class="button">ログアウト</button>
-          <button class="button">営業終了</button>
+          <button v-on:click="shopClose" class="button">営業終了</button>
         </div>
         <div class="cut-status border-radius bg-white center">{{cutStatus}}</div>
-        <Draggable v-model="cutNowNumberList" group="cutNumber" class="cut-number border-radius bg-white center">{{cutNow}}</Draggable>
-        <button class="issue-Wait-button">受付番号発行</button>
-        <div class="space-between">
+        <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">{{cutNow}}</Draggable>
+        <button v-on:click="issueWaitNo" class="issue-Wait-button">受付番号発行</button>
+        <div id="outer-number-list" class="space-between">
           <div class="number-list-box center-column">
             <div class="number-list-label center">カット済み</div>
             <div class="number-list-group border-solid">
-              <Draggable v-model="cutDoneNumberList" group="cutNumber" class="number-list center-column">
-                <div v-for="item in cutDoneNumberList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
+              <Draggable v-model="cutDoneNoList" group="cutNo" class="number-list center-column">
+                <div v-for="item in cutDoneNoList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
                   {{ item }}
                 </div>
               </Draggable>
@@ -26,8 +26,8 @@
           <div class="number-list-box center-column">
             <div class="number-list-label center">待ち番号</div>
             <div class="number-list-group border-solid">
-              <Draggable v-model="cutWaitNumberList" group="cutNumber" class="number-list center-column">
-                <div v-for="item in cutWaitNumberList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
+              <Draggable v-model="cutWaitNoList" group="cutNo" class="number-list center-column">
+                <div v-for="item in cutWaitNoList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
                   {{ item }}
                 </div>
               </Draggable>
@@ -36,8 +36,8 @@
           <div class="number-list-box center-column">
             <div class="number-list-label center">呼び出し中</div>
             <div class="number-list-group border-solid">
-              <Draggable v-model="cutCallNumberList" group="cutNumber" class="number-list center-column">
-                <div v-for="item in cutCallNumberList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
+              <Draggable v-model="cutCallNoList" group="cutNo" class="number-list center-column">
+                <div v-for="item in cutCallNoList" :key="item.id" class="list-object list-object-margin border-radius bg-white center">
                   {{ item }}
                 </div>
               </Draggable>
@@ -59,43 +59,80 @@ export default {
   },
   data() {
     return {
-      cutStatus: 'カット中',
-      cutNowNumberList: ['010'],
-      cutDoneNumberList: ['009', '007', '008'],
-      cutWaitNumberList: ['012', '011'],
-      cutCallNumberList: ['003', '002']
+      cutStatus: this.$store.getters['cutStatus'],
+      cutWaitNoList: this.$store.getters['cutWaitNoList'],
+      cutDoneNoList: this.$store.getters['cutDoneNoList'],
+      cutCallNoList: this.$store.getters['cutCallNoList'],
+      cutNowNoList: ['-'],
     }
   },
   computed: {
     cutNow() {
-      if (this.cutNowNumberList.length > 1) {
-        this.cutDoneNumberList.push(this.cutNowNumberList.pop());
+      if (this.cutNowNoList.length > 1) {
+        this.cutDoneNoList.push(this.cutNowNoList.pop())
+        if (this.cutDoneNoList[0] === '-') {
+          this.cutDoneNoList.pop()
+          this.updateCutStatus('カット中')
+        }
       }
-      this.sortCutDone();
-      this.sortCutWait();
-      this.sortCutCall();
-      return this.cutNowNumberList[0];
+      this.sortCutDone()
+      this.sortCutWait()
+      this.sortCutCall()
+      this.updateOuterNoListHeight()
+      this.$store.dispatch('updateWaitingNoState', {
+        waitNoList: this.cutWaitNoList,
+        doneNoList: this.cutDoneNoList,
+        callNoList: this.cutCallNoList,
+        nowNoList: this.cutNowNoList,
+      })
+      return this.cutNowNoList[0]
     }
   },
   methods: {
-    reset() {
-      this.cutStatus = '-';
-      this.cutNowNumberList[0] = '-';
-      this.cutDoneNumberList = [];
-      this.cutWaitNumberList = [];
-      this.cutCallNumberList = [];
+    updateCutStatus(cutStatus) {
+      this.$store.dispatch('updateCutStatus', {cutStatus: cutStatus})
+      this.cutStatus = this.$store.getters['cutStatus']
     },
-    issueWaitNumber() {
-      //待ち番号発行apiに投げて新規番号を取得してcutWaitNumberListにpush()
+    reset() {
+      this.cutStatus = '-'
+      this.cutNowNoList[0] = '-'
+      this.cutDoneNoList = []
+      this.cutWaitNoList = []
+      this.cutCallNoList = []
+      this.$store.dispatch('resetWaitingNoState')
+    },
+    issueWaitNo() {
+      //待ち番号発行apiに投げて新規番号を取得してcutWaitNoListにpush()
+      this.$store.dispatch('addWaitingNoState')
+      this.cutWaitNoList = this.$store.getters['cutWaitNoList']
+      this.cutDoneNoList = this.$store.getters['cutDoneNoList']
+      this.cutCallNoList = this.$store.getters['cutCallNoList']
     },
     sortCutDone() {
-      this.cutDoneNumberList.sort((a,b) => a < b ? 1 : -1);
+      this.cutDoneNoList.sort((a,b) => a < b ? 1 : -1)
     },
     sortCutWait() {
-      this.cutWaitNumberList.sort((a,b) => a > b ? 1 : -1);
+      this.cutWaitNoList.sort((a,b) => a > b ? 1 : -1)
     },
     sortCutCall() {
-      this.cutCallNumberList.sort((a,b) => a > b ? 1 : -1);
+      this.cutCallNoList.sort((a,b) => a > b ? 1 : -1)
+    },
+    updateOuterNoListHeight() {
+      let numberListLabels = document.getElementsByClassName('number-list-label')
+      let numberListObjects = document.getElementsByClassName('list-object')
+      let numberListLabelHeight = numberListLabels.length > 0 ? numberListLabels[0].clientHeight : 45
+      let numberListObjectHeight =  numberListObjects.length > 0 ? numberListObjects[0].clientHeight : 42
+      
+      let maxObjectLength = this.cutWaitNoList.length > maxObjectLength ? this.cutWaitNoList.length : 0
+      maxObjectLength = this.cutDoneNoList.length > maxObjectLength ? this.cutDoneNoList.length : maxObjectLength
+      maxObjectLength = this.cutCallNoList.length > maxObjectLength ? this.cutCallNoList.length : maxObjectLength
+      let outerNoList = document.getElementById('outer-number-list')
+      if (outerNoList !== null) {
+        outerNoList.style.height = numberListLabelHeight + ((numberListObjectHeight + 5) * maxObjectLength) + 30 + 'px'
+      }
+    },
+    shopClose() {
+      this.updateCutStatus('営業終了')
     }
   },
   setup() {
@@ -127,6 +164,10 @@ export default {
     margin-bottom: 20px;
     font-size: 3.0em;
   }
+  #outer-number-list {
+    height: 65px;
+    margin-bottom: 20px;
+  }
   .number-list-box {
     position: relative;
     width: 28%;
@@ -157,6 +198,9 @@ export default {
   }
   .list-object-margin:not(:first-of-type) {
     margin-top: 5px;
+  }
+  .page-bottom-margin {
+    margin-bottom: 20px;
   }
   .space-between {
     display: flex;
