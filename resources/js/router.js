@@ -2,7 +2,7 @@ import Vue  from "vue"
 import VueRouter from "vue-router"
 import Login from "./views/Login"
 import Admin from "./views/Admin"
-import Waiting from "./views/WaitingNoList"
+import Waiting from "./views/Waiting"
 Vue.use(VueRouter)
 
 const router = new VueRouter(
@@ -19,6 +19,11 @@ const router = new VueRouter(
         path: '/app/admin',
         name: 'admin',
         component: Admin
+      },
+      {
+        path: '/app/waiting',
+        name: 'waiting',
+        component: Waiting
       },
     ]
   }
