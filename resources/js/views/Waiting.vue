@@ -5,11 +5,11 @@
       <div class="waiting-container center-column">
         <div class="cut-number center-column bg-white border-radius border-solid">
           <p class="label">カット中の番号</p>
-          <p class="cut-now-number">{{cutNowNumber}}</p>
+          <p class="cut-now-number">{{cutNowNo}}</p>
         </div>
         <div v-on:click="toggleSidebar" class="waiting-people center-column bg-white border-radius border-solid">
           <p class="label">お待ち人数</p>
-          <p class="waiting-people-number">{{waitingPeopleNumber}}人</p>
+          <p class="waiting-people-number">{{cutWaitingTotal}}人</p>
         </div>
         <p class="hint">(待ち人数をタップすると待ち番号の一覧が表示されます)</p>
         <div class="now-time">
@@ -47,10 +47,16 @@ export default {
   },
   data() {
     return {
-      cutNowNumber: '001',
-      waitingPeopleNumber: 4,
       nowTime: this.getNowTime(),
-      cutWaitNumberList: this.$store.getters['waitingNoStateView']
+      cutWaitNumberList: this.$store.getters['waitingNoStateView'],
+    }
+  },
+  computed: {
+    cutNowNo() {
+      return this.$store.getters['cutNowNo']
+    },
+    cutWaitingTotal() {
+      return this.cutWaitNumberList.length
     }
   },
   methods: {
@@ -60,7 +66,7 @@ export default {
     },
     updateWaitingNo() {
       this.nowTime = this.getNowTime()
-      this.$store.dispatch('updateWaitingNoState', {})
+      this.$store.dispatch('updateWaitingNoState')
       this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
     },
     toggleSidebar() {

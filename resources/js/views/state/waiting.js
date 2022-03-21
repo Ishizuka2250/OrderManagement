@@ -7,14 +7,23 @@ const state = {
     id: 1,
     waitingNo: 1,
     isCutWait: false,
-    isCutDone: false,
-    isCutCall: true,
+    isCutDone: true,
+    isCutCall: false,
     isCutNow: false,
     isUpdate: false
   },
   {
     id: 2,
     waitingNo: 2,
+    isCutWait: false,
+    isCutDone: false,
+    isCutCall: false,
+    isCutNow: true,
+    isUpdate: false
+  },
+  {
+    id: 3,
+    waitingNo: 3,
     isCutWait: true,
     isCutDone: false,
     isCutCall: false,
@@ -39,6 +48,12 @@ const getters = {
   },
   cutStatus(state) {
     return state.cutStatus
+  },
+  cutNowNo(state) {
+    let cutNowNo = state.waitingNoState
+      .filter(item => item.isCutNow)
+      .map(item => item.waitingNo)
+    return cutNowNo.length > 0 ? ('00' + cutNowNo[0]).slice(-3) : '-'
   },
   cutWaitNoList(state) {
     return state.waitingNoState
@@ -70,7 +85,7 @@ const getters = {
         isCutCall: false
       }))
     return waitingNoAndCallNoList
-  }
+  },
 }
 
 const actions = {
@@ -79,8 +94,9 @@ const actions = {
     if (updateObject !== undefined) {
       await dispatch('commitUpdateAdminWaitingNoState', {updateObject: updateObject})
       await dispatch('commitResetUpdateFlg')
+    }else{
+      //サーバ側とのAPI通信
     }
-    //サーバ側とのAPI通信
   },
   commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
     commit('updateAdminWaitingNoState', {updateObject: updateObject})
