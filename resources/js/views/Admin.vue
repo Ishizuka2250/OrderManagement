@@ -80,11 +80,14 @@ export default {
       this.sortCutCall()
       this.updateOuterNoListHeight()
       this.$store.dispatch('updateWaitingNoState', {
-        waitNoList: this.cutWaitNoList,
-        doneNoList: this.cutDoneNoList,
-        callNoList: this.cutCallNoList,
-        nowNoList: this.cutNowNoList,
+        updateObject: {
+          waitNoList: this.cutWaitNoList,
+          doneNoList: this.cutDoneNoList,
+          callNoList: this.cutCallNoList,
+          nowNoList: this.cutNowNoList,
+        }
       })
+      console.log(this.$store.getters['waitingNoStatus'])
       return this.cutNowNoList[0]
     }
   },

@@ -2,14 +2,34 @@ import axios from "axios"
 
 const state = {
   cutStatus: '-',
-  waitingNoState: [],
+  waitingNoState: [
+  {
+    id: 1,
+    waitingNo: 1,
+    isCutWait: false,
+    isCutDone: false,
+    isCutCall: true,
+    isCutNow: false,
+    isUpdate: false
+  },
+  {
+    id: 2,
+    waitingNo: 2,
+    isCutWait: true,
+    isCutDone: false,
+    isCutCall: false,
+    isCutNow: false,
+    isUpdate: false
+  },
+  ]
   // {
   //   id: ,
   //   waitingNo: ,
   //   isCutWait: ,
   //   isCutDone: ,
   //   isCutCall: ,
-  //   isCutNow:
+  //   isCutNow: ,
+  //   isUpdate:
   // },
 }
 
@@ -35,20 +55,35 @@ const getters = {
       .filter(item => item.isCutCall)
       .map(item => ('00' + item.waitingNo).slice(-3))
   },
+  waitingNoStateView(state) {
+    let waitingNoAndCallNoList = []
+    state.waitingNoState
+      .filter(item => item.isCutCall)
+      .forEach(item => waitingNoAndCallNoList.push({
+        waitingNo: ('00' + item.waitingNo).slice(-3),
+        isCutCall: true
+      }))
+    state.waitingNoState
+      .filter(item => item.isCutWait)
+      .forEach(item => waitingNoAndCallNoList.push({
+        waitingNo: ('00' + item.waitingNo).slice(-3),
+        isCutCall: false
+      }))
+    return waitingNoAndCallNoList
+  }
 }
 
 const actions = {
-  async updateWaitingNoState({dispatch}, {
-    waitNoList: waitNoList, doneNoList: doneNoList, callNoList: callNoList, nowNoList:  nowNoList}) {
-    await dispatch('commitUpdateWaitingNoState', {
-      waitNoList: waitNoList, doneNoList: doneNoList, callNoList: callNoList,nowNoList:  nowNoList})
+  async updateWaitingNoState({dispatch}, {updateObject: updateObject}) {
+    console.log(updateObject)
+    if (updateObject !== undefined) {
+      await dispatch('commitUpdateAdminWaitingNoState', {updateObject: updateObject})
+      await dispatch('commitResetUpdateFlg')
+    }
     //サーバ側とのAPI通信
-    await dispatch('commitResetUpdateFlg')
   },
-  commitUpdateWaitingNoState({commit}, {
-      waitNoList: waitNoList, doneNoList: doneNoList, callNoList: callNoList, nowNoList:  nowNoList}) {
-    commit('updateWaitingNoState', {
-      waitNoList: waitNoList, doneNoList: doneNoList, callNoList: callNoList, nowNoList: nowNoList})
+  commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
+    commit('updateAdminWaitingNoState', {updateObject: updateObject})
   },
   async addWaitingNoState({dispatch}) {
     await dispatch('commitAddWaitingNoState')
@@ -112,8 +147,8 @@ const mutations = {
       }
     })
   },
-  async updateWaitingNoState(state, {waitNoList, doneNoList, callNoList, nowNoList}) {
-    waitNoList.forEach(waitingNo => {
+  async updateAdminWaitingNoState(state, {updateObject}) {
+    updateObject.waitNoList.forEach(waitingNo => {
       let update = 0
       for(let i = 0; i < state.waitingNoState.length; i++) {
         if (parseInt(waitingNo) === state.waitingNoState[i].waitingNo) {
@@ -134,7 +169,7 @@ const mutations = {
       }
     })
 
-    doneNoList.forEach(waitingNo => {
+    updateObject.doneNoList.forEach(waitingNo => {
       for(let i = 0; i < state.waitingNoState.length; i++) {
         let update = 0
         if (parseInt(waitingNo) === state.waitingNoState[i].waitingNo) {
@@ -155,7 +190,7 @@ const mutations = {
       }
     })
 
-    callNoList.forEach(waitingNo => {
+    updateObject.callNoList.forEach(waitingNo => {
       for(let i = 0; i < state.waitingNoState.length; i++) {
         let update = 0
         if (parseInt(waitingNo) === state.waitingNoState[i].waitingNo) {
@@ -176,7 +211,7 @@ const mutations = {
       }
     })
 
-    let waitingNo = nowNoList[0] !== '-' ? parseInt(nowNoList[0]) : 0
+    let waitingNo = updateObject.nowNoList[0] !== '-' ? parseInt(updateObject.nowNoList[0]) : 0
     for(let i = 0; i < state.waitingNoState.length; i++) {
       let update = 0
       if (waitingNo === state.waitingNoState[i].waitingNo) {

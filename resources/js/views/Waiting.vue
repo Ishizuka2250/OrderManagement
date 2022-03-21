@@ -30,8 +30,8 @@
         <p class="sidebar-hint red">※赤は現在お呼び出し中の番号です。早めにお戻り下さい。</p>
         <div class="center-column">
           <div v-for="item in cutWaitNumberList" :key="item.id" class="waiting-number waiting-number-margin center border-radius"
-            :class="{'bg-red' : item.isCalling, 'bg-white' : !item.isCalling}">
-            {{item.waitNumber}}
+            :class="{'bg-red' : item.isCutCall, 'bg-white' : !item.isCutCall}">
+            {{item.waitingNo}}
           </div>
         </div>
       </div>
@@ -50,16 +50,7 @@ export default {
       cutNowNumber: '001',
       waitingPeopleNumber: 4,
       nowTime: this.getNowTime(),
-      cutWaitNumberList: [
-        {
-          waitNumber: 1,
-          isCalling: true
-        },
-        {
-          waitNumber: 2,
-          isCalling: false
-        }
-      ]
+      cutWaitNumberList: this.$store.getters['waitingNoStateView']
     }
   },
   methods: {
@@ -69,6 +60,8 @@ export default {
     },
     updateWaitingNo() {
       this.nowTime = this.getNowTime()
+      this.$store.dispatch('updateWaitingNoState', {})
+      this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
     },
     toggleSidebar() {
       const sidebar = document.getElementById('sidebar')
