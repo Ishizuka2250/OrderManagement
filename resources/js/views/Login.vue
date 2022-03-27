@@ -7,15 +7,15 @@
         <table>
           <tr>
             <th>UserName</th>
-            <td><input class="input-box" type="text"></td>
+            <td><input class="input-box" type="text" v-model="email"></td>
           </tr>
           <tr>
             <th>Password</th>
-            <td><input class="input-box" type="password" name="" id=""></td>
+            <td><input class="input-box" type="password" v-model="password"></td>
           </tr>
         </table>
         <div class="login-button-row">
-          <button class="login-button">Login</button>
+          <button class="login-button" v-on:click="login">Login</button>
         </div>
       </div>
     </div>
@@ -29,6 +29,24 @@ export default {
     AppHeader: header
   },
   data() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+  methods: {
+    login() {
+      //console.log(this.email + '  ' + this.password)
+      let accessToken = 'hoge'
+      this.$store.dispatch('commitUpdateLoginCredential', {
+        credential: {
+          userID: this.email,
+          accessToken: accessToken,
+          isLogin: true
+        }
+      })
+      this.$router.push('admin')
+    }
   }
 }
 </script>

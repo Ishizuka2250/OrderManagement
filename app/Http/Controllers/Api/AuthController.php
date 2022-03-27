@@ -34,7 +34,7 @@ class AuthController extends Controller
         $accessToken = $user->createToken('Token')->plainTextToken;
         
         return response()->json([
-            'success' => 0,
+            'success' => 1,
             'access_token' => $accessToken,
             'login_user' => $user,
             'message' => 'Login success.'
@@ -43,7 +43,7 @@ class AuthController extends Controller
 
     public function check(Request $request) {
         return response()->json([
-            'success' => 0,
+            'success' => 1,
             'login_user' => $request->user(),
             'message' => 'Login now.'
         ], 200);
@@ -53,7 +53,7 @@ class AuthController extends Controller
         $user = $request->user();
         $user->tokens()->delete();
         return response()->json([
-            'success' => 0,
+            'success' => 1,
             'logout_user' => $user,
             'message' => 'logout success.'
         ], 200);

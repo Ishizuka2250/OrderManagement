@@ -125,7 +125,7 @@ const actions = {
   },
   commitResetUpdateFlg({commit}) {
     commit('resetUpdateFlg')
-  }
+  },
 }
 
 const mutations = {
