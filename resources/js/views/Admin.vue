@@ -6,7 +6,7 @@
         <div class="button-list space-between">
           <button class="button">更新</button>
           <button v-on:click="reset" class="button">リセット</button>
-          <button class="button">ログアウト</button>
+          <button v-on:click="logout" class="button">ログアウト</button>
           <button v-on:click="shopClose" class="button">営業終了</button>
         </div>
         <div class="cut-status border-radius bg-white center">{{cutStatus}}</div>
@@ -52,6 +52,7 @@
 <script>
 import header from '../components/Header.vue'
 import draggable from 'vuedraggable'
+import credential from './state/credential'
 export default {
   components: {
     AppHeader: header,
@@ -136,6 +137,32 @@ export default {
     },
     shopClose() {
       this.updateCutStatus('営業終了')
+    },
+    async logout() {
+      await this.callAPILogout()
+      if (!this.$store.getters['isLogin']) {
+        console.log('info:System logout.')
+        this.$router.push('login')
+      }
+    },
+    async callAPILogout() {
+      let result = await axios.delete(
+        '/api/v1/logout', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+      }).catch(
+        (error) => console.log(error)
+      )
+      if (result !== undefined) {
+        if (result.data.success) {
+          let credential = {
+            isLogin: false,
+            accessToken: ''
+          }
+          this.$store.dispatch('commitUpdateLoginCredential', {credential})
+        }
+      }
     }
   },
   setup() {

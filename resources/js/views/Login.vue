@@ -44,7 +44,7 @@ export default {
     async login() {
       await this.apiCallLoginCredential(this.email, this.password)
       if (this.$store.getters['isLogin']) {
-        console.log('info:Login OK.')
+        console.log('info:System login.')
         this.$router.push('admin')
       }
     },
