@@ -34,6 +34,11 @@ export default {
       password: ''
     }
   },
+  created: async function() {
+    //await this.$store.dispatch('commitInitLoginCheck')
+    await this.apiInitLoginCheck()
+    console.log(this.$store.getters['isLogin'])
+  },
   methods: {
     login() {
       //console.log(this.email + '  ' + this.password)
@@ -46,6 +51,37 @@ export default {
         }
       })
       this.$router.push('admin')
+    },
+    async apiInitLoginCheck() {
+      let accessToken = localStorage.getItem('AccessToken')
+      if (accessToken) {
+        const result = await axios.get(
+          'http://localhost:8000/api/v1/check', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+              //'Authorization': 'Bearer 9|uP1oGqzbVRBsIdFCyPNyjdtD2L3ziZZ6hfIxnWVu'
+              //Authorization: 'Bearer 1|2OZx3BuAPG3nDSXOc0HJFvP89llmNk82kW53V3CW'
+            }
+          }).catch(
+            function(error) {
+              console.log(error)
+            }
+          )
+        //console.log(result.data.login_user.email)
+        const credential = {
+          userID: '',
+          isLogin: false,
+          accessToken: ''
+        }
+        if (result !== undefined) {
+          const credential = {
+            userID: result.data.login_user.email,
+            isLogin: result.data.success === 1 ? true : false,
+            accessToken: accessToken
+          }
+        }
+        this.$store.dispatch('commitUpdateLoginCredential', {credential})
+      }
     }
   }
 }

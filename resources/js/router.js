@@ -4,7 +4,7 @@ import Login from "./views/Login"
 import Admin from "./views/Admin"
 import Waiting from "./views/Waiting"
 import Store from "./store"
-import store from "./store"
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -35,9 +35,6 @@ const router = new VueRouter(
 )
 
 router.beforeEach((to, from, next) =>{
-  if (to.matched.some(record => record.name === 'login')) {
-    Store.dispatch('commitInitLoginCheck')
-  }
   if (to.matched.some(record => record.meta.requiresAuth) && !Store.getters['isLogin']) {
     next({
       path: '/app/login',
