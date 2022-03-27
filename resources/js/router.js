@@ -40,11 +40,6 @@ router.beforeEach((to, from, next) =>{
       path: '/app/login',
       query: { redirect: to.fullPath }
     })
-  }else if (to.matched.some(record => record.name === 'login') && Store.getters['isLogin']) {
-    next({
-      path: '/app/admin',
-      query: { redirect: to.fullPath }
-    })
   }else{
     next();
   }

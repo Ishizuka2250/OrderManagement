@@ -1,14 +1,10 @@
 import axios from "axios"
 
 const state = {
-  userID: '',
   isLogin: false,
 }
 
 const getters = {
-  userID(state) {
-    return state.userID
-  },
   isLogin(state) {
     return state.isLogin
   }
@@ -22,8 +18,6 @@ const actions = {
 
 const mutations = {
   updateLoginCredential(state, {credential}) {
-    console.log(credential)
-    state.userID = credential.userID
     state.isLogin = credential.isLogin
     localStorage.setItem('AccessToken', credential.accessToken)
   },

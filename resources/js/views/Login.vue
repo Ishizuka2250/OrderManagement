@@ -35,53 +35,63 @@ export default {
     }
   },
   created: async function() {
-    //await this.$store.dispatch('commitInitLoginCheck')
-    await this.apiInitLoginCheck()
-    console.log(this.$store.getters['isLogin'])
+    await this.apiCallLoginCheck()
+    if (this.$store.getters['isLogin']) {
+      this.$router.push('admin')
+    }
   },
   methods: {
-    login() {
-      //console.log(this.email + '  ' + this.password)
-      let accessToken = 'hoge'
-      this.$store.dispatch('commitUpdateLoginCredential', {
-        credential: {
-          userID: this.email,
-          accessToken: accessToken,
-          isLogin: true
-        }
-      })
-      this.$router.push('admin')
+    async login() {
+      await this.apiCallLoginCredential(this.email, this.password)
+      if (this.$store.getters['isLogin']) {
+        console.log('info:Login OK.')
+        this.$router.push('admin')
+      }
     },
-    async apiInitLoginCheck() {
+    async apiCallLoginCredential(email, password) {
+      let credential = {
+        isLogin: false,
+        accessToken: ''
+      }
+      let result = await axios.post(
+        '/api/v1/login', {
+          email: email,
+          password: password
+        }).catch(
+          (error) => alert('ログイン認証に失敗しました.\n入力内容をご確認下さい.')
+        )
+      if (result !== undefined) {
+        if (result.data.success) {
+          credential.isLogin = true
+          credential.accessToken = result.data.access_token
+        }
+      }
+      this.$store.dispatch('commitUpdateLoginCredential', {credential})
+    },
+    async apiCallLoginCheck() {
       let accessToken = localStorage.getItem('AccessToken')
+      let credential = {
+        isLogin: false,
+        accessToken: ''
+      }
+
       if (accessToken) {
         const result = await axios.get(
-          'http://localhost:8000/api/v1/check', {
+          '/api/v1/check', {
             headers: {
               'Authorization': `Bearer ${accessToken}`
-              //'Authorization': 'Bearer 9|uP1oGqzbVRBsIdFCyPNyjdtD2L3ziZZ6hfIxnWVu'
-              //Authorization: 'Bearer 1|2OZx3BuAPG3nDSXOc0HJFvP89llmNk82kW53V3CW'
             }
           }).catch(
-            function(error) {
-              console.log(error)
-            }
+            (error) => console.log('info:The Old Access Token has been deleted due to session timeout.')
           )
-        //console.log(result.data.login_user.email)
-        const credential = {
-          userID: '',
-          isLogin: false,
-          accessToken: ''
-        }
         if (result !== undefined) {
-          const credential = {
-            userID: result.data.login_user.email,
-            isLogin: result.data.success === 1 ? true : false,
-            accessToken: accessToken
-          }
+            if (result.data.success) {
+              credential.isLogin = true
+              credential.accessToken = accessToken
+            }
         }
-        this.$store.dispatch('commitUpdateLoginCredential', {credential})
       }
+      this.$store.dispatch('commitUpdateLoginCredential', {credential})
     }
   }
 }
