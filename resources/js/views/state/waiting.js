@@ -2,35 +2,7 @@ import axios from "axios"
 
 const state = {
   cutStatus: '-',
-  waitingNoState: [
-  {
-    id: 1,
-    waitingNo: 1,
-    isCutWait: false,
-    isCutDone: true,
-    isCutCall: false,
-    isCutNow: false,
-    isUpdate: false
-  },
-  {
-    id: 2,
-    waitingNo: 2,
-    isCutWait: false,
-    isCutDone: false,
-    isCutCall: false,
-    isCutNow: true,
-    isUpdate: false
-  },
-  {
-    id: 3,
-    waitingNo: 3,
-    isCutWait: true,
-    isCutDone: false,
-    isCutCall: false,
-    isCutNow: false,
-    isUpdate: false
-  },
-  ]
+  waitingNoState: []
   // {
   //   id: ,
   //   waitingNo: ,
@@ -90,13 +62,16 @@ const getters = {
 
 const actions = {
   async updateWaitingNoState({dispatch}, {updateObject: updateObject}) {
-    console.log(updateObject)
     if (updateObject !== undefined) {
       await dispatch('commitUpdateAdminWaitingNoState', {updateObject: updateObject})
       await dispatch('commitResetUpdateFlg')
     }else{
       //サーバ側とのAPI通信
     }
+  },
+  commitUpdateAPIWaitingNoState({commit}, {updateObject: updateObject}){
+    commit('resetWaitingNoState')
+    commit('updateAPIWaitingNoState', {updateObject: updateObject})
   },
   commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
     commit('updateAdminWaitingNoState', {updateObject: updateObject})
@@ -109,16 +84,8 @@ const actions = {
   commitAddWaitingNoState({commit}) {
     commit('addWaitingNoState')
   },
-  async resetWaitingNoState({dispatch}) {
-    await dispatch('commitResetWaitingNoState')
-    //サーバ側とのAPI通信
-  },
   commitResetWaitingNoState({commit}) {
     commit('resetWaitingNoState')
-  },
-  async updateCutStatus({dispatch}, {cutStatus: cutStatus}) {
-    await dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
-    //サーバ側とのAPI通信
   },
   commitUpdateCutStatus({commit}, {cutStatus: cutStatus}) {
     commit('updateCutStatus', {cutStatus: cutStatus})
@@ -163,7 +130,20 @@ const mutations = {
       }
     })
   },
-  async updateAdminWaitingNoState(state, {updateObject}) {
+  updateAPIWaitingNoState(state, {updateObject}) {
+    updateObject.forEach(waitingNo => {
+      state.waitingNoState.push({
+        id: waitingNo.id,
+        waitingNo: waitingNo.waiting_no,
+        isCutWait: waitingNo.is_cut_wait === 1 ? true : false,
+        isCutDone: waitingNo.is_cut_done === 1 ? true : false,
+        isCutCall: waitingNo.is_cut_now === 1 ? true : false,
+        isCutNow: waitingNo.is_cut_call === 1 ? true : false,
+        isUpdate: false
+      })
+    })
+  },
+  updateAdminWaitingNoState(state, {updateObject}) {
     updateObject.waitNoList.forEach(waitingNo => {
       let update = 0
       for(let i = 0; i < state.waitingNoState.length; i++) {

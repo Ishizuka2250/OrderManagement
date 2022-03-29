@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\WaitNumber;
 
 class WaitNumberController extends Controller
 {
@@ -13,7 +15,11 @@ class WaitNumberController extends Controller
      */
     public function index()
     {
-        //
+        $waitNumber = WaitNumber::all();
+        return response()->json([
+            'success' => 1,
+            'wait_number' => $waitNumber
+        ]);
     }
 
     /**

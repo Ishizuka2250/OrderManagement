@@ -53,6 +53,7 @@
 import header from '../components/Header.vue'
 import draggable from 'vuedraggable'
 import credential from './state/credential'
+import axios from 'axios'
 export default {
   components: {
     AppHeader: header,
@@ -61,11 +62,17 @@ export default {
   data() {
     return {
       cutStatus: this.$store.getters['cutStatus'],
-      cutWaitNoList: this.$store.getters['cutWaitNoList'],
-      cutDoneNoList: this.$store.getters['cutDoneNoList'],
-      cutCallNoList: this.$store.getters['cutCallNoList'],
+      cutWaitNoList: [],
+      cutDoneNoList: [],
+      cutCallNoList: [],
       cutNowNoList: ['-'],
     }
+  },
+  created: async function() {
+    await this.callApiWaitNumber()
+    this.cutWaitNoList = this.$store.getters['cutWaitNoList']
+    this.cutDoneNoList = this.$store.getters['cutDoneNoList']
+    this.cutCallNoList = this.$store.getters['cutCallNoList']
   },
   computed: {
     cutNow() {
@@ -88,13 +95,12 @@ export default {
           nowNoList: this.cutNowNoList,
         }
       })
-      console.log(this.$store.getters['waitingNoStatus'])
       return this.cutNowNoList[0]
     }
   },
   methods: {
     updateCutStatus(cutStatus) {
-      this.$store.dispatch('updateCutStatus', {cutStatus: cutStatus})
+      this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
       this.cutStatus = this.$store.getters['cutStatus']
     },
     reset() {
@@ -103,7 +109,7 @@ export default {
       this.cutDoneNoList = []
       this.cutWaitNoList = []
       this.cutCallNoList = []
-      this.$store.dispatch('resetWaitingNoState')
+      this.$store.dispatch('commitResetWaitingNoState')
     },
     issueWaitNo() {
       //待ち番号発行apiに投げて新規番号を取得してcutWaitNoListにpush()
@@ -137,6 +143,16 @@ export default {
     },
     shopClose() {
       this.updateCutStatus('営業終了')
+    },
+    async callApiWaitNumber() {
+      let result = await axios.get(
+          '/api/v1/waiting'
+        ).catch(
+          (error) => console.log(error)
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+      }
     },
     async logout() {
       await this.callAPILogout()
