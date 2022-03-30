@@ -15,10 +15,9 @@ class WaitNumberController extends Controller
      */
     public function index()
     {
-        $waitNumber = WaitNumber::all();
         return response()->json([
             'success' => 1,
-            'wait_number' => $waitNumber
+            'wait_number' => WaitNumber::all()
         ]);
     }
 
@@ -30,7 +29,19 @@ class WaitNumberController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $waitNumber = new WaitNumber;
+        $waitNumber->create([
+            'waiting_no' => WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1,
+            'is_cut_wait' => true,
+            'is_cut_done' => false,
+            'is_cut_call' => false,
+            'is_cut_now' => false,
+        ]);
+        return response()->json([
+            'success' => 1,
+            'wait_number' => WaitNumber::all(),
+            'message' => 'Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
+        ], 201);
     }
 
     /**

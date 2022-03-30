@@ -15,9 +15,10 @@ use App\Http\Controllers\Api\WaitNumberController;
 |
 */
 Route::post('/v1/login', [AuthController::class, 'login']);
-Route::get('/v1/waiting/', [WaitNumberController::class, 'index']);
+Route::get('/v1/waiting', [WaitNumberController::class, 'index']);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/v1/logout', [AuthController::class, 'logout']);
     Route::get('/v1/check', [AuthController::class, 'check']);
+    Route::post('/v1/waiting', [WaitNumberController::class, 'store']);
 });

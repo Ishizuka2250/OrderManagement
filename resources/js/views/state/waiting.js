@@ -76,14 +76,6 @@ const actions = {
   commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
     commit('updateAdminWaitingNoState', {updateObject: updateObject})
   },
-  async addWaitingNoState({dispatch}) {
-    await dispatch('commitAddWaitingNoState')
-    //サーバ側とのAPI通信
-    await dispatch('commitResetUpdateFlg')
-  },
-  commitAddWaitingNoState({commit}) {
-    commit('addWaitingNoState')
-  },
   commitResetWaitingNoState({commit}) {
     commit('resetWaitingNoState')
   },
@@ -98,25 +90,6 @@ const actions = {
 const mutations = {
   updateCutStatus(state, {cutStatus}) {
     state.cutStatus = cutStatus
-  },
-  addWaitingNoState(state) {
-    let id = 0
-    state.waitingNoState.forEach(item => {
-      id = item.id > id ? item.id : id
-    })
-    let waitingNo = 0
-    state.waitingNoState.forEach(item => {
-      waitingNo = item.waitingNo > waitingNo ? item.waitingNo : waitingNo
-    })
-    state.waitingNoState.push({
-      id: id + 1,
-      waitingNo: waitingNo + 1,
-      isCutWait: true,
-      isCutDone: false,
-      isCutCall: false,
-      isCutNow: false,
-      isUpdate: true
-    })
   },
   resetWaitingNoState(state) {
     state.waitingNoState = []

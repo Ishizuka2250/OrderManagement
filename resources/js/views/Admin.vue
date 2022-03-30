@@ -111,9 +111,10 @@ export default {
       this.cutCallNoList = []
       this.$store.dispatch('commitResetWaitingNoState')
     },
-    issueWaitNo() {
+    async issueWaitNo() {
       //待ち番号発行apiに投げて新規番号を取得してcutWaitNoListにpush()
-      this.$store.dispatch('addWaitingNoState')
+      //this.$store.dispatch('addWaitingNoState')
+      await this.callAPIIssueWaitNumber()
       this.cutWaitNoList = this.$store.getters['cutWaitNoList']
       this.cutDoneNoList = this.$store.getters['cutDoneNoList']
       this.cutCallNoList = this.$store.getters['cutCallNoList']
@@ -143,6 +144,19 @@ export default {
     },
     shopClose() {
       this.updateCutStatus('営業終了')
+    },
+    async callAPIIssueWaitNumber() {
+      let result = await axios.post(
+          '/api/v1/waiting', {}, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
+          (error) => console.log(error)
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+      }
     },
     async callApiWaitNumber() {
       let result = await axios.get(
