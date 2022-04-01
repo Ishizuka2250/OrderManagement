@@ -1,5 +1,3 @@
-import axios from "axios"
-
 const state = {
   cutStatus: '-',
   waitingNoState: []
@@ -15,11 +13,23 @@ const state = {
 }
 
 const getters = {
+  cutStatus(state) {
+    return state.cutStatus
+  },
   waitingNoStatus(state) {
     return state.waitingNoState
   },
-  cutStatus(state) {
-    return state.cutStatus
+  updateWaitingNoState(state) {
+    return state.waitingNoState
+      .filter(item => item.isUpdate)
+      .map(item => {
+        return {
+          id: item.id,
+          is_cut_wait: item.isCutWait,
+          is_cut_done: item.isCutDone,
+          is_cut_now: item.isCutNow,
+          is_cut_call: item.isCutCall
+      }})
   },
   cutNowNo(state) {
     let cutNowNo = state.waitingNoState
@@ -61,14 +71,6 @@ const getters = {
 }
 
 const actions = {
-  async updateWaitingNoState({dispatch}, {updateObject: updateObject}) {
-    if (updateObject !== undefined) {
-      await dispatch('commitUpdateAdminWaitingNoState', {updateObject: updateObject})
-      await dispatch('commitResetUpdateFlg')
-    }else{
-      //サーバ側とのAPI通信
-    }
-  },
   commitUpdateAPIWaitingNoState({commit}, {updateObject: updateObject}){
     commit('resetWaitingNoState')
     commit('updateAPIWaitingNoState', {updateObject: updateObject})
@@ -110,8 +112,8 @@ const mutations = {
         waitingNo: waitingNo.waiting_no,
         isCutWait: waitingNo.is_cut_wait === 1 ? true : false,
         isCutDone: waitingNo.is_cut_done === 1 ? true : false,
-        isCutCall: waitingNo.is_cut_now === 1 ? true : false,
-        isCutNow: waitingNo.is_cut_call === 1 ? true : false,
+        isCutCall: waitingNo.is_cut_call === 1 ? true : false,
+        isCutNow: waitingNo.is_cut_now === 1 ? true : false,
         isUpdate: false
       })
     })

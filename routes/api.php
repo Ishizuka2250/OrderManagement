@@ -21,4 +21,5 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/v1/logout', [AuthController::class, 'logout']);
     Route::get('/v1/check', [AuthController::class, 'check']);
     Route::post('/v1/waiting', [WaitNumberController::class, 'store']);
+    Route::patch('/v1/waiting', [WaitNumberController::class, 'update']);
 });

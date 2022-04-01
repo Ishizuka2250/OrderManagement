@@ -52,7 +52,6 @@
 <script>
 import header from '../components/Header.vue'
 import draggable from 'vuedraggable'
-import credential from './state/credential'
 import axios from 'axios'
 export default {
   components: {
@@ -65,7 +64,8 @@ export default {
       cutWaitNoList: [],
       cutDoneNoList: [],
       cutCallNoList: [],
-      cutNowNoList: ['-'],
+      cutNowNoList: [],
+      updateWaitingNoState: []
     }
   },
   created: async function() {
@@ -73,6 +73,8 @@ export default {
     this.cutWaitNoList = this.$store.getters['cutWaitNoList']
     this.cutDoneNoList = this.$store.getters['cutDoneNoList']
     this.cutCallNoList = this.$store.getters['cutCallNoList']
+    this.cutNowNoList.push(this.$store.getters['cutNowNo'])
+    if (this.cutNowNoList[0] !== '-') this.updateCutStatus('カット中')
   },
   computed: {
     cutNow() {
@@ -87,7 +89,7 @@ export default {
       this.sortCutWait()
       this.sortCutCall()
       this.updateOuterNoListHeight()
-      this.$store.dispatch('updateWaitingNoState', {
+      this.$store.dispatch('commitUpdateAdminWaitingNoState', {
         updateObject: {
           waitNoList: this.cutWaitNoList,
           doneNoList: this.cutDoneNoList,
@@ -95,13 +97,35 @@ export default {
           nowNoList: this.cutNowNoList,
         }
       })
+      this.updateWaitingNoState = this.$store.getters['updateWaitingNoState']
       return this.cutNowNoList[0]
+    }
+  },
+  watch: {
+    updateWaitingNoState: async function() {
+      if (this.updateWaitingNoState.length > 0) {
+        await this.callAPIUpdateWaitingNoState()
+        this.$store.dispatch('commitResetUpdateFlg')
+      }
     }
   },
   methods: {
     updateCutStatus(cutStatus) {
       this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
       this.cutStatus = this.$store.getters['cutStatus']
+    },
+    async callAPIUpdateWaitingNoState() {
+      const result = await axios.patch(
+        '/api/v1/waiting', {
+          waiting_numbers: this.updateWaitingNoState
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
+          (error) => console.log(error)
+        )
+      if (result !== undefined) console.log(result)
     },
     reset() {
       this.cutStatus = '-'
@@ -112,8 +136,6 @@ export default {
       this.$store.dispatch('commitResetWaitingNoState')
     },
     async issueWaitNo() {
-      //待ち番号発行apiに投げて新規番号を取得してcutWaitNoListにpush()
-      //this.$store.dispatch('addWaitingNoState')
       await this.callAPIIssueWaitNumber()
       this.cutWaitNoList = this.$store.getters['cutWaitNoList']
       this.cutDoneNoList = this.$store.getters['cutDoneNoList']
