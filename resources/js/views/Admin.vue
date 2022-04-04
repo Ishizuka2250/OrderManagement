@@ -10,7 +10,11 @@
           <button v-on:click="shopClose" class="button">営業終了</button>
         </div>
         <div class="cut-status border-radius bg-white center">{{cutStatus}}</div>
-        <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">{{cutNow}}</Draggable>
+        <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">
+          <div>
+            {{cutNow}}
+          </div>
+        </Draggable>
         <button v-on:click="issueWaitNo" class="issue-Wait-button">受付番号発行</button>
         <div id="outer-number-list" class="space-between">
           <div class="number-list-box center-column">
@@ -73,17 +77,20 @@ export default {
     this.cutWaitNoList = this.$store.getters['cutWaitNoList']
     this.cutDoneNoList = this.$store.getters['cutDoneNoList']
     this.cutCallNoList = this.$store.getters['cutCallNoList']
-    this.cutNowNoList.push(this.$store.getters['cutNowNo'])
-    if (this.cutNowNoList[0] !== '-') this.updateCutStatus('カット中')
+    if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
   },
   computed: {
     cutNow() {
       if (this.cutNowNoList.length > 1) {
-        this.cutDoneNoList.push(this.cutNowNoList.pop())
-        if (this.cutDoneNoList[0] === '-') {
-          this.cutDoneNoList.pop()
+        this.cutDoneNoList.push(this.cutNowNoList.shift())
+        if (this.cutDoneNoList.indexOf('-') !== -1) {
+          this.removeEmptyNumber()
           this.updateCutStatus('カット中')
         }
+      }else if ((this.cutNowNoList.length === 0) && (this.cutNowNoList[0] !== '-')) {
+        this.cutNowNoList.push('-')
+        this.updateCutStatus('準備中')
+        this.removeEmptyNumber()
       }
       this.sortCutDone()
       this.sortCutWait()
@@ -110,6 +117,14 @@ export default {
     }
   },
   methods: {
+    removeEmptyNumber() {
+      this.cutDoneNoList.indexOf('-') !== -1 ?
+        this.cutDoneNoList.splice(this.cutDoneNoList.indexOf('-'), 1) : ''
+      this.cutWaitNoList.indexOf('-') !== -1 ?
+        this.cutWaitNoList.splice(this.cutWaitNoList.indexOf('-'), 1) : ''
+      this.cutCallNoList.indexOf('-') !== -1 ?
+        this.cutCallNoList.splice(this.cutCallNoList.indexOf('-'), 1) : ''
+    },
     updateCutStatus(cutStatus) {
       this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
       this.cutStatus = this.$store.getters['cutStatus']
@@ -125,7 +140,7 @@ export default {
         }).catch(
           (error) => console.log(error)
         )
-      if (result !== undefined) console.log(result)
+      if (result !== undefined) console.log('info:Update waitingNo successed.')
     },
     reset() {
       this.cutStatus = '-'
