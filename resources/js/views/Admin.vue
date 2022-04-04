@@ -11,7 +11,7 @@
         </div>
         <div class="cut-status border-radius bg-white center">{{cutStatus}}</div>
         <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">
-          <div>
+          <div class="internal-cut-number">
             {{cutNow}}
           </div>
         </Draggable>
@@ -87,7 +87,7 @@ export default {
           this.removeEmptyNumber()
           this.updateCutStatus('カット中')
         }
-      }else if ((this.cutNowNoList.length === 0) && (this.cutNowNoList[0] !== '-')) {
+      }else if (this.cutNowNoList.length === 0) {
         this.cutNowNoList.push('-')
         this.updateCutStatus('準備中')
         this.removeEmptyNumber()
@@ -261,6 +261,9 @@ export default {
     margin-bottom: 20px;
     font-size: 3.0em;
   }
+  .internal-cut-number:hover {
+    cursor: pointer;
+  }
   #outer-number-list {
     height: 65px;
     margin-bottom: 20px;
@@ -292,6 +295,9 @@ export default {
     width: 80%;
     padding: 10px 0;
     font-size: 1.2em;
+  }
+  .list-object:hover {
+    cursor: pointer;
   }
   .list-object-margin:not(:first-of-type) {
     margin-top: 5px;
