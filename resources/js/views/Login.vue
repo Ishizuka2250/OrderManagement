@@ -54,7 +54,7 @@ export default {
         accessToken: ''
       }
       let result = await axios.post(
-        '/api/v1/login', {
+        '/api/v1/auth/login', {
           email: email,
           password: password
         }).catch(
@@ -77,7 +77,7 @@ export default {
 
       if (accessToken) {
         const result = await axios.get(
-          '/api/v1/check', {
+          '/api/v1/auth/check', {
             headers: {
               'Authorization': `Bearer ${accessToken}`
             }

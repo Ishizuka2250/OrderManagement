@@ -14,12 +14,12 @@ use App\Http\Controllers\Api\WaitNumberController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::post('/v1/login', [AuthController::class, 'login']);
+Route::post('/v1/auth/login', [AuthController::class, 'login']);
 Route::get('/v1/waiting', [WaitNumberController::class, 'index']);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::get('/v1/check', [AuthController::class, 'check']);
-    Route::delete('/v1/logout', [AuthController::class, 'logout']);
+    Route::get('/v1/auth/check', [AuthController::class, 'check']);
+    Route::delete('/v1/auth/logout', [AuthController::class, 'logout']);
     Route::post('/v1/waiting', [WaitNumberController::class, 'store']);
     Route::patch('/v1/waiting', [WaitNumberController::class, 'update']);
     Route::delete('/v1/waiting', [WaitNumberController::class, 'destroy']);

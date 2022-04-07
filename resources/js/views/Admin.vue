@@ -227,7 +227,7 @@ export default {
     },
     async callAPILogout() {
       let result = await axios.delete(
-        '/api/v1/logout', {
+        '/api/v1/auth/logout', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
           }
