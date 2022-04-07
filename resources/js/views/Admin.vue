@@ -15,7 +15,7 @@
             {{cutNow}}
           </div>
         </Draggable>
-        <button v-on:click="issueWaitNo" class="issue-Wait-button">受付番号発行</button>
+        <button v-on:click="issueWaitingNo" class="issue-Wait-button">受付番号発行</button>
         <div id="outer-number-list" class="space-between">
           <div class="number-list-box center-column">
             <div class="number-list-label center">カット済み</div>
@@ -73,11 +73,8 @@ export default {
     }
   },
   created: async function() {
-    await this.callApiWaitNumber()
-    this.cutWaitNoList = this.$store.getters['cutWaitNoList']
-    this.cutDoneNoList = this.$store.getters['cutDoneNoList']
-    this.cutCallNoList = this.$store.getters['cutCallNoList']
-    if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
+    await this.callApiGetWaitNumber()
+    this.updateLocalWaitingNo()
   },
   computed: {
     cutNow() {
@@ -129,32 +126,19 @@ export default {
       this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
       this.cutStatus = this.$store.getters['cutStatus']
     },
-    async callAPIUpdateWaitingNoState() {
-      const result = await axios.patch(
-        '/api/v1/waiting', {
-          waiting_numbers: this.updateWaitingNoState
-        }, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
-          }
-        }).catch(
-          (error) => console.log(error)
-        )
-      if (result !== undefined) console.log('info:Update waitingNo successed.')
-    },
-    reset() {
-      this.cutStatus = '-'
-      this.cutNowNoList[0] = '-'
-      this.cutDoneNoList = []
-      this.cutWaitNoList = []
-      this.cutCallNoList = []
-      this.$store.dispatch('commitResetWaitingNoState')
-    },
-    async issueWaitNo() {
-      await this.callAPIIssueWaitNumber()
+    updateLocalWaitingNo() {
       this.cutWaitNoList = this.$store.getters['cutWaitNoList']
       this.cutDoneNoList = this.$store.getters['cutDoneNoList']
       this.cutCallNoList = this.$store.getters['cutCallNoList']
+      if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
+    },
+    async issueWaitingNo() {
+      await this.callAPIIssueWaitNumber()
+      this.updateLocalWaitingNo()
+    },
+    async reset() {
+      await this.callAPIWaitNumberReset()
+      this.updateLocalWaitingNo()
     },
     sortCutDone() {
       this.cutDoneNoList.sort((a,b) => a < b ? 1 : -1)
@@ -164,6 +148,16 @@ export default {
     },
     sortCutCall() {
       this.cutCallNoList.sort((a,b) => a > b ? 1 : -1)
+    },
+    shopClose() {
+      this.updateCutStatus('営業終了')
+    },
+    async logout() {
+      await this.callAPILogout()
+      if (!this.$store.getters['isLogin']) {
+        console.log('info:System logout.')
+        this.$router.push('login')
+      }
     },
     updateOuterNoListHeight() {
       let numberListLabels = document.getElementsByClassName('number-list-label')
@@ -179,8 +173,18 @@ export default {
         outerNoList.style.height = numberListLabelHeight + ((numberListObjectHeight + 5) * maxObjectLength) + 30 + 'px'
       }
     },
-    shopClose() {
-      this.updateCutStatus('営業終了')
+    async callAPIUpdateWaitingNoState() {
+      const result = await axios.patch(
+        '/api/v1/waiting', {
+          waiting_numbers: this.updateWaitingNoState
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
+          (error) => console.log(error)
+        )
+      if (result !== undefined) console.log('info:Update waitingNo successed.')
     },
     async callAPIIssueWaitNumber() {
       let result = await axios.post(
@@ -195,7 +199,23 @@ export default {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
       }
     },
-    async callApiWaitNumber() {
+    async callAPIWaitNumberReset() {
+      let result = await axios.delete(
+        '/api/v1/waiting', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
+          (error) => console.log(error)
+        )
+      if (result !== undefined) {
+        console.log(result)
+        if (result.data.success) {
+          await this.callApiGetWaitNumber()
+        }
+      }
+    },
+    async callApiGetWaitNumber() {
       let result = await axios.get(
           '/api/v1/waiting'
         ).catch(
@@ -203,13 +223,6 @@ export default {
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
-      }
-    },
-    async logout() {
-      await this.callAPILogout()
-      if (!this.$store.getters['isLogin']) {
-        console.log('info:System logout.')
-        this.$router.push('login')
       }
     },
     async callAPILogout() {

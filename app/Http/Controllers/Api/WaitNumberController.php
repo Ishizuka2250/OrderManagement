@@ -18,8 +18,9 @@ class WaitNumberController extends Controller
     {
         return response()->json([
             'success' => 1,
-            'wait_number' => WaitNumber::all()
-        ]);
+            'wait_number' => WaitNumber::all(),
+            'message' => 'Response the ' . WaitNumber::all()->count() . ' Wait No States.'
+        ], 200);
     }
 
     /**
@@ -31,8 +32,13 @@ class WaitNumberController extends Controller
     public function store(Request $request)
     {
         $waitNumber = new WaitNumber;
+        if ($waitNumber->all()->count() > 0) {
+            $waitingNumber = WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
+        }else{
+            $waitingNumber = 1;
+        }
         $waitNumber->create([
-            'waiting_no' => WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1,
+            'waiting_no' => $waitingNumber,
             'is_cut_wait' => true,
             'is_cut_done' => false,
             'is_cut_call' => false,
@@ -100,8 +106,21 @@ class WaitNumberController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy()
     {
-        //
+        $waitNumber = WaitNumber::all();
+        if ($waitNumber->count() > 0) {
+            WaitNumber::truncate();
+            return response()->json([
+                'success' => 1,
+                'message' => 'The All Wait Number has been deleted.'
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => 0,
+                'message' => 'The All Wait Number already deleted.'
+            ], 200);
+        }
+
     }
 }

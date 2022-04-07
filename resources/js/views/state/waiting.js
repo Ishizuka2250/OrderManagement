@@ -78,9 +78,6 @@ const actions = {
   commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
     commit('updateAdminWaitingNoState', {updateObject: updateObject})
   },
-  commitResetWaitingNoState({commit}) {
-    commit('resetWaitingNoState')
-  },
   commitUpdateCutStatus({commit}, {cutStatus: cutStatus}) {
     commit('updateCutStatus', {cutStatus: cutStatus})
   },

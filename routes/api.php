@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WaitNumberController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,8 +18,9 @@ Route::post('/v1/login', [AuthController::class, 'login']);
 Route::get('/v1/waiting', [WaitNumberController::class, 'index']);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::delete('/v1/logout', [AuthController::class, 'logout']);
     Route::get('/v1/check', [AuthController::class, 'check']);
+    Route::delete('/v1/logout', [AuthController::class, 'logout']);
     Route::post('/v1/waiting', [WaitNumberController::class, 'store']);
     Route::patch('/v1/waiting', [WaitNumberController::class, 'update']);
+    Route::delete('/v1/waiting', [WaitNumberController::class, 'destroy']);
 });
