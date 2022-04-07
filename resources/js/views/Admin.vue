@@ -75,6 +75,7 @@ export default {
   created: async function() {
     await this.callApiGetWaitNumber()
     this.updateLocalWaitingNo()
+    if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
   },
   computed: {
     cutNow() {
@@ -126,12 +127,6 @@ export default {
       this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
       this.cutStatus = this.$store.getters['cutStatus']
     },
-    updateLocalWaitingNo() {
-      this.cutWaitNoList = this.$store.getters['cutWaitNoList']
-      this.cutDoneNoList = this.$store.getters['cutDoneNoList']
-      this.cutCallNoList = this.$store.getters['cutCallNoList']
-      if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
-    },
     async issueWaitingNo() {
       await this.callAPIIssueWaitNumber()
       this.updateLocalWaitingNo()
@@ -158,6 +153,11 @@ export default {
         console.log('info:System logout.')
         this.$router.push('login')
       }
+    },
+    updateLocalWaitingNo() {
+      this.cutWaitNoList = this.$store.getters['cutWaitNoList']
+      this.cutDoneNoList = this.$store.getters['cutDoneNoList']
+      this.cutCallNoList = this.$store.getters['cutCallNoList']
     },
     updateOuterNoListHeight() {
       let numberListLabels = document.getElementsByClassName('number-list-label')
