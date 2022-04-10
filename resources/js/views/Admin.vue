@@ -131,10 +131,12 @@ export default {
       this.updateLocalWaitingNo()
     },
     async reset() {
-      await this.callAPIWaitNumberReset()
-      this.updateLocalWaitingNo()
-      this.cutNowNoList[0] = this.$store.getters['cutNowNo']
-      if (this.cutNowNoList[0] === '-') this.updateCutStatus('準備中')
+      if (confirm('待ち番号をリセットしますか？')) {
+        await this.callAPIWaitNumberReset()
+        this.updateLocalWaitingNo()
+        this.cutNowNoList[0] = this.$store.getters['cutNowNo']
+        if (this.cutNowNoList[0] === '-') this.updateCutStatus('準備中')
+      }
     },
     sortCutDone() {
       this.cutDoneNoList.sort((a,b) => a < b ? 1 : -1)
