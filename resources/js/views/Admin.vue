@@ -4,7 +4,6 @@
     <div class="outer-controll-container center">
       <div class="controll-container">
         <div class="button-list space-between">
-          <button class="button">更新</button>
           <button v-on:click="reset" class="button">リセット</button>
           <button v-on:click="logout" class="button">ログアウト</button>
           <button v-on:click="shopClose" class="button">営業終了</button>
