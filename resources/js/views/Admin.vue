@@ -136,6 +136,8 @@ export default {
         this.updateLocalWaitingNo()
         this.cutNowNoList[0] = this.$store.getters['cutNowNo']
         if (this.cutNowNoList[0] === '-') this.updateCutStatus('準備中')
+        this.$awn.success('順番待ち番号をリセットしました.')
+        console.log('The Wait Number State was reseted.')
       }
     },
     sortCutDone() {
@@ -148,13 +150,18 @@ export default {
       this.cutCallNoList.sort((a,b) => a > b ? 1 : -1)
     },
     shopClose() {
-      this.updateCutStatus('営業終了')
+      this.$awn.confirm(
+        '営業を終了しますか？',
+        () => {this.updateCutStatus('営業終了')},
+        () => {console.log('false')}
+      )
     },
     async logout() {
       await this.callAPILogout()
       if (!this.$store.getters['isLogin']) {
-        console.log('info:System logout.')
         this.$router.push('login')
+        this.$awn.info('ログアウトしました.')
+        console.log('info:System logout.')
       }
     },
     updateLocalWaitingNo() {
@@ -185,7 +192,10 @@ export default {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
           }
         }).catch(
-          (error) => console.log(error)
+          (error) => {
+            this.$awn.alert('順番待ち番号の更新に失敗しました.')
+            console.log(error)
+          }
         )
       if (result !== undefined) console.log('info:Update waitingNo successed.')
     },
@@ -196,7 +206,10 @@ export default {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
           }
         }).catch(
-          (error) => console.log(error)
+          (error) => {
+            this.$awn.alert('順番待ち番号の発行に失敗しました.')
+            console.log(error)
+          }
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
@@ -209,10 +222,12 @@ export default {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
           }
         }).catch(
-          (error) => console.log(error)
+          (error) => {
+            this.$awn.alert('順番待ち番号のリセットに失敗しました.')
+            console.log(error)
+          }
         )
       if (result !== undefined) {
-        console.log(result)
         if (result.data.success) {
           await this.callApiGetWaitNumber()
         }
@@ -222,7 +237,10 @@ export default {
       let result = await axios.get(
           '/api/v1/waiting'
         ).catch(
-          (error) => console.log(error)
+          (error) => {
+            this.$awn.alert('順番待ち番号の取得に失敗しました.')
+            console.log(error)
+          }
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
@@ -235,7 +253,10 @@ export default {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
           }
       }).catch(
-        (error) => console.log(error)
+        (error) => {
+          this.$awn.alert('ログアウトに失敗しました.')
+          console.log(error)
+        }
       )
       if (result !== undefined) {
         if (result.data.success) {

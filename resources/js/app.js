@@ -8,12 +8,32 @@ require('./bootstrap')
 
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import VueAWN from 'vue-awesome-notifications'
 import router from './router'
 import store from './store'
 
 window.Vue = require('vue').default
 Vue.use(VueRouter)
 
+let awnOptions = {
+    position: "top-right",
+    labels: {
+        confirm: ''
+    },
+    durations: {
+        global: 3000
+    },
+    icons: {
+        prefix: "<span style='font-size: 2.5em;' class='material-icons-outlined'>",
+        info: "info",
+        success: "check_circle",
+        alert: "highlight_off",
+        warning: "report_problem",
+        confirm: "report_problem",
+        suffix: "</span>"
+    }
+}
+Vue.use(VueAWN, awnOptions)
 /**
  * The following block of code may be used to automatically register your
  * Vue components. It will recursively scan this directory for the Vue
@@ -36,5 +56,5 @@ Vue.use(VueRouter)
 const app = new Vue({
     el: '#app',
     router,
-    store,
+    store
 })

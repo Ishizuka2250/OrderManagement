@@ -38,14 +38,17 @@ export default {
     await this.apiCallLoginCheck()
     if (this.$store.getters['isLogin']) {
       this.$router.push('admin')
+      this.$awn.info('自動ログインしました.')
+      console.log('info:System auto login.')
     }
   },
   methods: {
     async login() {
       await this.apiCallLoginCredential(this.email, this.password)
       if (this.$store.getters['isLogin']) {
-        console.log('info:System login.')
         this.$router.push('admin')
+        this.$awn.success('ログインしました.')
+        console.log('info:System login.')
       }
     },
     async apiCallLoginCredential(email, password) {
@@ -58,7 +61,10 @@ export default {
           email: email,
           password: password
         }).catch(
-          (error) => alert('ログイン認証に失敗しました.\n入力内容をご確認下さい.')
+          (error) => {
+            this.$awn.alert('ログイン認証に失敗しました.')
+            console.log(error)
+          }
         )
       if (result !== undefined) {
         if (result.data.success) {
