@@ -4,19 +4,19 @@
     <div class="outer-container center">
       <div class="waiting-container center-column">
         <div class="cut-number center-column bg-white border-radius border-solid">
-          <p class="label">カット中の番号</p>
+          <p class="label">現在カット中の番号</p>
           <p class="cut-now-number">{{cutNowNo}}</p>
         </div>
-        <div v-on:click="toggleSidebar" class="waiting-people center-column bg-white border-radius border-solid">
-          <p class="label">お待ち人数</p>
-          <p class="waiting-people-number">{{cutWaitingTotal}}人</p>
+        <div class="waiting-people center-column bg-white border-radius border-solid">
+          <p class="label">待ち人数</p>
+          <p class="waiting-people-number">{{cutWaitingTotal}}人<span class="waiting-time">(約{{waitingTime}}分待ち)</span></p>
         </div>
-        <p class="hint">(待ち人数をタップすると待ち番号の一覧が表示されます)</p>
         <div class="now-time">
-          <p class="time"><span class="lime">{{nowTime}}</span> 現在</p>
+          <p class="time">{{nowTime}} 現在</p>
         </div>
         <div class="button-container center-column">
-          <button v-on:click="updateWaitingNo" class="button hover-cursor">最新の情報に更新</button>
+          <button v-on:click="toggleSidebar" class="button button-margin hover-cursor">待ち番号の一覧を表示</button>
+          <button v-on:click="updateWaitingNo" class="button button-margin hover-cursor">最新の情報に更新</button>
         </div>
       </div>
     </div>
@@ -45,6 +45,11 @@ export default {
   components: {
     AppHeader: header
   },
+  created: async function() {
+    await this.callApiGetWaitNumber()
+    this.callApiGetWaitNumber()
+    this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+  },
   data() {
     return {
       nowTime: this.getNowTime(),
@@ -57,6 +62,9 @@ export default {
     },
     cutWaitingTotal() {
       return this.cutWaitNumberList.length
+    },
+    waitingTime() {
+      return this.cutWaitNumberList.length * 20
     }
   },
   methods: {
@@ -64,14 +72,28 @@ export default {
       const now = new Date(Date.now())
       return ('00' + now.getHours().toString()).slice(-2) + ':' + ('00' + now.getMinutes().toString()).slice(-2)
     },
-    updateWaitingNo() {
+    async updateWaitingNo() {
       this.nowTime = this.getNowTime()
-      this.$store.dispatch('updateWaitingNoState')
+      await this.callApiGetWaitNumber()
       this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+      this.$awn.info('最新の情報に更新しました.')
     },
     toggleSidebar() {
       const sidebar = document.getElementById('sidebar')
       sidebar.classList.toggle('show-sidebar')
+    },
+    async callApiGetWaitNumber() {
+      let result = await axios.get(
+          '/api/v1/waiting'
+        ).catch(
+          (error) => {
+            this.$awn.alert('順番待ち番号の取得に失敗しました.')
+            console.log(error)
+          }
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+      }
     },
   },
   setup() {
@@ -103,13 +125,7 @@ export default {
   .waiting-people {
     width: 100%;
     padding: 20px 0;
-    margin-bottom: 5px;
-  }
-  .hint {
-    margin-bottom: 30px;
-  }
-  .waiting-people:hover {
-    cursor: pointer;
+    margin-bottom: 20px;
   }
   .waiting-people-number {
     font-size: 2.0em;
@@ -128,6 +144,7 @@ export default {
     top: 0;
     left: -220px;
     transition: 0.5s;
+    overflow-y: scroll;
   }
   .show-sidebar {
     transform: translateX(220px);
@@ -167,6 +184,9 @@ export default {
     width: 100%;
     height: 40px;
   }
+  .waiting-time {
+    font-size: 0.8em;
+  }
   .waiting-number-margin:not(:first-of-type) {
     margin-top: 10px;
   }
@@ -187,6 +207,9 @@ export default {
     padding: 10px 25px;
     font-size: 1.2em;
   }
+  .button-margin:not(:last-of-type) {
+    margin-bottom: 10px;
+  }
   .bg-white {
     background: white;
   }
@@ -204,7 +227,7 @@ export default {
     border: 1px solid black;
   }
   .lime {
-    color:lime;
+    color: lime;
   }
   .white {
     color: white;
