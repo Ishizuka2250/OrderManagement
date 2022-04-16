@@ -24,4 +24,9 @@ export default {
     margin: 0;
     padding: 20px 0px;
   }
+  @media screen and (max-width: 480px) {
+    .header-text {
+      font-size: 1.65em;
+    }
+  }
 </style>

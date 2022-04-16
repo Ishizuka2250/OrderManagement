@@ -25,13 +25,15 @@
         <span class="closs-bar closs-bar-over bg-white"></span>
         <span class="closs-bar closs-bar-under bg-white"></span>
       </div>
-      <div class="sidebar-number-container">
-        <p class="sidebar-title white">お待ちの番号</p>
-        <p class="sidebar-hint red">※赤は現在お呼び出し中の番号です。早めにお戻り下さい。</p>
-        <div class="center-column">
-          <div v-for="item in cutWaitNumberList" :key="item.id" class="waiting-number waiting-number-margin center border-radius"
-            :class="{'bg-red' : item.isCutCall, 'bg-white' : !item.isCutCall}">
-            {{item.waitingNo}}
+      <div class="center-column">
+        <div class="sidebar-number-container">
+          <p class="sidebar-title white">お待ちの番号</p>
+          <p class="sidebar-hint red">※赤は現在お呼び出し中の番号です。早めにお戻り下さい。</p>
+          <div class="center-column">
+            <div v-for="item in cutWaitNumberList" :key="item.id" class="waiting-number waiting-number-margin center border-radius"
+              :class="{'bg-red' : item.isCutCall, 'bg-white' : !item.isCutCall}">
+              {{item.waitingNo}}
+            </div>
           </div>
         </div>
       </div>
@@ -130,6 +132,9 @@ export default {
   .waiting-people-number {
     font-size: 2.0em;
   }
+  .waiting-time {
+    font-size: 0.8em;
+  }
   .time {
     font-size: 1.5em;
     font-weight: bold;
@@ -166,6 +171,7 @@ export default {
   .closs-bar{
     position: absolute;
     display: inline-block;
+    margin: 5px 0 0 5px;
     width: 20px;
     height: 2px;
   }
@@ -183,9 +189,6 @@ export default {
   .waiting-number {
     width: 100%;
     height: 40px;
-  }
-  .waiting-time {
-    font-size: 0.8em;
   }
   .waiting-number-margin:not(:first-of-type) {
     margin-top: 10px;
@@ -235,5 +238,49 @@ export default {
   .red {
     color: red;
   }
-
+  @media screen and (max-width: 768px) {
+    .outer-container {
+      width: 90%;
+    }
+    .waiting-container{
+      width: 100%;
+    }
+  }
+  @media screen and (max-width: 480px) {
+    .outer-container {
+      width: 95%;
+    }
+    .waiting-people-number {
+      font-size: 1.7em;
+    }
+    .waiting-time {
+      font-size: 0.8em;
+    }
+    .button {
+      font-size: 1.1em;
+    }
+    .show-sidebar {
+      transform: translateX(100%);
+    }
+    .sidebar {
+      width: 100%;
+      left: -100%;
+    }
+    .sidebar-title {
+      font-size: 1.4em;
+    }
+    .closs-bar{
+      width: 25px;
+      height: 3px;
+    }
+    .sidebar-number-container {
+      width: 70%;
+      padding: 20px;
+    }
+    .waiting-number {
+      width: 100%;
+      height: 60px;
+      font-size: 1.4em;
+    }
+  }
 </style>
