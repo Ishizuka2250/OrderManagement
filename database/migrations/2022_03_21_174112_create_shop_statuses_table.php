@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::create('shop_statuses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('status_id')->nullable(false)->unique();
             $table->string('status_name')->nullable(false);
             $table->boolean('is_now_status')->nullable(false);
             $table->timestamps();
