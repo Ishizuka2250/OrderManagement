@@ -24,6 +24,7 @@
         "vue-template-compiler": "^2.6.12"
     },
     "dependencies": {
+        "vue-async-computed": "^3.9.0",
         "vue-awesome-notifications": "^3.1.1",
         "vue-router": "^3.5.3",
         "vuedraggable": "^2.24.3",

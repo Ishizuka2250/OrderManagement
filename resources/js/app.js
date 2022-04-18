@@ -9,6 +9,7 @@ require('./bootstrap')
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueAWN from 'vue-awesome-notifications'
+import AsyncComputed from 'vue-async-computed'
 import router from './router'
 import store from './store'
 
@@ -34,6 +35,7 @@ let awnOptions = {
     }
 }
 Vue.use(VueAWN, awnOptions)
+Vue.use(AsyncComputed)
 /**
  * The following block of code may be used to automatically register your
  * Vue components. It will recursively scan this directory for the Vue
