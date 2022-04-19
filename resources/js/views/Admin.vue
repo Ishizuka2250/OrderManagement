@@ -8,7 +8,7 @@
           <button v-on:click="logout" class="button">ログアウト</button>
           <button v-on:click="shopClose" class="button">営業終了</button>
         </div>
-        <div class="cut-status border-radius bg-white center">{{cutStatus}}</div>
+        <div class="cut-status border-radius bg-white center">{{shopStatus}}</div>
         <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">
           <div class="internal-cut-number">
             {{cutNow}}
@@ -63,7 +63,7 @@ export default {
   },
   data() {
     return {
-      cutStatus: this.$store.getters['cutStatus'],
+      shopStatus: '',
       cutWaitNoList: [],
       cutDoneNoList: [],
       cutCallNoList: [],
@@ -75,22 +75,24 @@ export default {
     await this.callApiGetWaitNumber()
     this.updateLocalWaitingNo()
     if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
+    await this.callAPIGetShopStatus()
+    this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
   },
-  computed: {
-    cutNow() {
+  asyncComputed: {
+    async cutNow() {
       if (this.cutNowNoList.length > 1) {
         this.cutDoneNoList.push(this.cutNowNoList.shift())
         if (this.cutDoneNoList.indexOf('-') !== -1) {
           this.removeEmptyNumber()
-          this.updateCutStatus('カット中')
+          await this.updateShopStatus(2)
         }
       }else if (this.cutNowNoList.length === 0) {
         this.cutNowNoList.push('-')
-        this.updateCutStatus('準備中')
+        await this.updateShopStatus(3)
         this.removeEmptyNumber()
       }
-      this.sortCutDone()
       this.sortCutWait()
+      this.sortCutDone()
       this.sortCutCall()
       this.updateOuterNoListHeight()
       this.$store.dispatch('commitUpdateAdminWaitingNoState', {
@@ -111,7 +113,7 @@ export default {
         await this.callAPIUpdateWaitingNoState()
         this.$store.dispatch('commitResetUpdateFlg')
       }
-    }
+    },
   },
   methods: {
     removeEmptyNumber() {
@@ -122,9 +124,9 @@ export default {
       this.cutCallNoList.indexOf('-') !== -1 ?
         this.cutCallNoList.splice(this.cutCallNoList.indexOf('-'), 1) : ''
     },
-    updateCutStatus(cutStatus) {
-      this.$store.dispatch('commitUpdateCutStatus', {cutStatus: cutStatus})
-      this.cutStatus = this.$store.getters['cutStatus']
+    async updateShopStatus(shopStatusID) {
+      await this.callAPIUpdateShopStatus(shopStatusID)
+      this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
     },
     async issueWaitingNo() {
       await this.callAPIIssueWaitNumber()
@@ -137,7 +139,7 @@ export default {
           await this.callAPIWaitNumberReset()
           this.updateLocalWaitingNo()
           this.cutNowNoList[0] = this.$store.getters['cutNowNo']
-          if (this.cutNowNoList[0] === '-') this.updateCutStatus('準備中')
+          if (this.cutNowNoList[0] === '-') await this.updateShopStatus(3)
           this.$awn.success('順番待ち番号をリセットしました.')
           console.log('info:The Wait Number State was reseted.')
         },
@@ -154,9 +156,16 @@ export default {
     },
     shopClose() {
       this.$awn.confirm(
-        '営業を終了しますか？',
-        () => {this.updateCutStatus('営業終了')},
-        () => {console.log('false')}
+        '<center>営業を終了しますか？<br>(この操作を実行すると順番待ち番号もリセットされます.)</center>',
+        async () => {
+          await this.callAPIWaitNumberReset()
+          this.updateLocalWaitingNo()
+          this.cutNowNoList[0] = this.$store.getters['cutNowNo']
+          if (this.cutNowNoList[0] === '-') await this.updateShopStatus(1)
+          this.$awn.success('営業を終了しました.')
+          console.log('info:The Shop was closed.')
+        },
+        () => {}
       )
     },
     async logout() {
@@ -184,6 +193,51 @@ export default {
       let outerNoList = document.getElementById('outer-number-list')
       if (outerNoList !== null) {
         outerNoList.style.height = numberListLabelHeight + ((numberListObjectHeight + 5) * maxObjectLength) + 30 + 'px'
+      }
+    },
+    printShopStatus(statusID) {
+      switch (statusID) {
+        case 1:
+          return '営業終了'
+        case 2:
+          return 'カット中'
+        case 3:
+          return '準備中'
+        default:
+          return '-'
+      }
+    },
+    async callAPIUpdateShopStatus(statusID) {
+      const result = await axios.patch(
+        '/api/v1/status', {
+          'status_id': statusID
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
+          (error) => {
+            this.$awn.alert('店状態の変更に失敗しました.')
+            console.log(error)
+          }
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: statusID})
+      }
+    },
+    async callAPIGetShopStatus() {
+      const result = await axios.get(
+          '/api/v1/status'
+        ).catch(
+          (error) => {
+            this.$awn.alert('店状態の取得に失敗しました.')
+            console.log(error)
+          }
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: result.data.status_id})
+      } else {
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: 0})
       }
     },
     async callAPIUpdateWaitingNoState() {

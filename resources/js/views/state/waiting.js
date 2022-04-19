@@ -1,5 +1,5 @@
 const state = {
-  cutStatus: '-',
+  shopStatus: 0,
   waitingNoState: []
   // {
   //   id: ,
@@ -13,8 +13,8 @@ const state = {
 }
 
 const getters = {
-  cutStatus(state) {
-    return state.cutStatus
+  shopStatus(state) {
+    return state.shopStatus
   },
   waitingNoStatus(state) {
     return state.waitingNoState
@@ -78,8 +78,8 @@ const actions = {
   commitUpdateAdminWaitingNoState({commit}, {updateObject: updateObject}) {
     commit('updateAdminWaitingNoState', {updateObject: updateObject})
   },
-  commitUpdateCutStatus({commit}, {cutStatus: cutStatus}) {
-    commit('updateCutStatus', {cutStatus: cutStatus})
+  commitUpdateShopStatus({commit}, {shopStatusID: shopStatusID}) {
+    commit('updateShopStatus', {shopStatusID: shopStatusID})
   },
   commitResetUpdateFlg({commit}) {
     commit('resetUpdateFlg')
@@ -87,8 +87,8 @@ const actions = {
 }
 
 const mutations = {
-  updateCutStatus(state, {cutStatus}) {
-    state.cutStatus = cutStatus
+  updateShopStatus(state, {shopStatusID}) {
+    state.shopStatus = shopStatusID
   },
   resetWaitingNoState(state) {
     state.waitingNoState = []

@@ -4,12 +4,15 @@
     <div class="outer-container center">
       <div class="waiting-container center-column">
         <div class="cut-number center-column bg-white border-radius border-solid">
-          <p class="label">現在カット中の番号</p>
+          <p class="label">{{shopStatus}}</p>
           <p class="cut-now-number">{{cutNowNo}}</p>
         </div>
         <div class="waiting-people center-column bg-white border-radius border-solid">
           <p class="label">待ち人数</p>
-          <p class="waiting-people-number">{{cutWaitingTotal}}人<span class="waiting-time">(約{{waitingTime}}分待ち)</span></p>
+          <p class="waiting-people-number">{{cutWaitingTotal}}人
+            <span v-if="cutWaitNumberList.length > 0" class="waiting-time">(約{{waitingTime}}分待ち)</span>
+            <span v-else class="waiting-time">(現在お待ちはいません)</span>
+          </p>
         </div>
         <div class="now-time">
           <p class="time">{{nowTime}} 現在</p>
@@ -38,6 +41,16 @@
         </div>
       </div>
     </div>
+    <div v-if="isShopClose" class="center shop-close-container">
+      <div class="center shop-close-item bg-black">
+        <div class="center-column">
+          <p class="label white">お知らせ</p>
+          <p class="shop-close-message white">本日の営業は終了しました.</p>
+          <p class="shop-close-message white">またのご来店をお待ちしております.</p>
+          <button v-on:click="updateWaitingNo" class="shop-close-update-button hover-cursor">最新の情報に更新</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -49,11 +62,12 @@ export default {
   },
   created: async function() {
     await this.callApiGetWaitNumber()
-    this.callApiGetWaitNumber()
     this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+    await this.updateCutStatus()
   },
   data() {
     return {
+      shopStatus: '',
       nowTime: this.getNowTime(),
       cutWaitNumberList: this.$store.getters['waitingNoStateView'],
     }
@@ -67,7 +81,10 @@ export default {
     },
     waitingTime() {
       return this.cutWaitNumberList.length * 20
-    }
+    },
+    isShopClose() {
+      return this.$store.getters['shopStatus'] == 1
+    },
   },
   methods: {
     getNowTime() {
@@ -78,11 +95,28 @@ export default {
       this.nowTime = this.getNowTime()
       await this.callApiGetWaitNumber()
       this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+      await this.updateCutStatus()
       this.$awn.info('最新の情報に更新しました.')
     },
     toggleSidebar() {
       const sidebar = document.getElementById('sidebar')
       sidebar.classList.toggle('show-sidebar')
+    },
+    async updateCutStatus() {
+      await this.callAPIGetShopStatus()
+      this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
+    },
+    printShopStatus(statusID) {
+      switch (statusID) {
+        case 1:
+          return '営業終了'
+        case 2:
+          return '現在カット中の番号'
+        case 3:
+          return '準備中'
+        default:
+          return '-'
+      }
     },
     async callApiGetWaitNumber() {
       let result = await axios.get(
@@ -95,6 +129,21 @@ export default {
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+      }
+    },
+    async callAPIGetShopStatus() {
+      const result = await axios.get(
+          '/api/v1/status'
+        ).catch(
+          (error) => {
+            this.$awn.alert('店状態の取得に失敗しました.')
+            console.log(error)
+          }
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: result.data.status_id})
+      } else {
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: 0})
       }
     },
   },
@@ -171,7 +220,7 @@ export default {
   .closs-bar{
     position: absolute;
     display: inline-block;
-    margin: 5px 0 0 5px;
+    margin: 15px 0 0 15px;
     width: 20px;
     height: 2px;
   }
@@ -192,6 +241,31 @@ export default {
   }
   .waiting-number-margin:not(:first-of-type) {
     margin-top: 10px;
+  }
+  .shop-close-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  .shop-close-item {
+    width: 360px;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .shop-close-message {
+    font-size: 1.2em;
+  }
+  .shop-close-message:not(:last-of-type) {
+    margin-bottom: 5px;
+  }
+  .shop-close-update-button {
+    font-size: 0.9em;
+    margin-top: 10px;
+    padding: 5px 20px;
   }
   .center-column {
     display: flex;
@@ -281,6 +355,22 @@ export default {
       width: 100%;
       height: 60px;
       font-size: 1.4em;
+    }
+    .shop-close-item {
+      width: 75%;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .shop-close-message {
+      font-size: 1.0em;
+    }
+    .shop-close-message:not(:last-of-type) {
+      margin-bottom: 5px;
+    }
+    .shop-close-update-button {
+      font-size: 0.9em;
+      margin-top: 10px;
+      padding: 3px 15px;
     }
   }
 </style>
