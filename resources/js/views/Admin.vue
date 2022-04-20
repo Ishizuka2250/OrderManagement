@@ -136,12 +136,13 @@ export default {
       this.$awn.confirm(
         '順番待ち番号をリセットしますか？',
         async () => {
-          await this.callAPIWaitNumberReset()
-          this.updateLocalWaitingNo()
-          this.cutNowNoList[0] = this.$store.getters['cutNowNo']
-          if (this.cutNowNoList[0] === '-') await this.updateShopStatus(3)
-          this.$awn.success('順番待ち番号をリセットしました.')
-          console.log('info:The Wait Number State was reseted.')
+          if (await this.callAPIWaitNumberReset() == 0) {
+            this.updateLocalWaitingNo()
+            this.cutNowNoList[0] = this.$store.getters['cutNowNo']
+            if (this.cutNowNoList[0] === '-') await this.updateShopStatus(3)
+            this.$awn.success('順番待ち番号をリセットしました.')
+            console.log('info:The Wait Number State was reseted.')
+          }
         },
         () => {})
     },
@@ -158,19 +159,25 @@ export default {
       this.$awn.confirm(
         '<center>営業を終了しますか？<br>(この操作を実行すると順番待ち番号もリセットされます.)</center>',
         async () => {
-          await this.callAPIWaitNumberReset()
-          this.updateLocalWaitingNo()
-          this.cutNowNoList[0] = this.$store.getters['cutNowNo']
-          if (this.cutNowNoList[0] === '-') await this.updateShopStatus(1)
-          this.$awn.success('営業を終了しました.')
-          console.log('info:The Shop was closed.')
+          if (await this.callAPIWaitNumberReset() == 0) {
+            this.updateLocalWaitingNo()
+            this.cutNowNoList[0] = this.$store.getters['cutNowNo']
+            if (this.cutNowNoList[0] === '-') await this.updateShopStatus(1)
+            this.$awn.success('営業を終了しました.')
+            console.log('info:The Shop was closed.')
+          }
         },
         () => {}
       )
     },
+    sessionOut() {
+      let credential = {isLogin: false, accessToken: ''}
+      this.$store.dispatch('commitUpdateLoginCredential', {credential})
+      this.$router.push('login')
+      console.log('info:The Login Token has not found in api server.')
+    },
     async logout() {
-      await this.callAPILogout()
-      if (!this.$store.getters['isLogin']) {
+      if (await this.callAPILogout() == 0) {
         this.$router.push('login')
         this.$awn.info('ログアウトしました.')
         console.log('info:System logout.')
@@ -207,7 +214,31 @@ export default {
           return '-'
       }
     },
+    apiErrorCode(axiosErrorMessage, errorMessages) {
+      let errorCode = 0
+      if (axiosErrorMessage !== undefined) {
+        if (axiosErrorMessage.indexOf('Network Error') != -1) {
+          errorCode = 1
+        } else if(axiosErrorMessage.indexOf('status code 401') != -1){
+          errorCode = 2
+          this.sessionOut()
+        } else {
+          errorCode = 3
+        }
+        if (errorMessages !== undefined) {
+          let errorMessage = errorMessages.filter(item => item.errorCode == errorCode)[0].errorMessage
+          errorMessage !== undefined ? this.$awn.alert(errorMessage) : ''
+        }
+      }
+      return errorCode
+    },
     async callAPIUpdateShopStatus(statusID) {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '店状態の変更に失敗しました. ネットワーク接続を確認して下さい.'},
+        {errorCode: 2, errorMessage: '店状態の変更に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '店状態の変更に失敗しました.'}
+      ]
       const result = await axios.patch(
         '/api/v1/status', {
           'status_id': statusID
@@ -217,20 +248,27 @@ export default {
           }
         }).catch(
           (error) => {
-            this.$awn.alert('店状態の変更に失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: statusID})
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIGetShopStatus() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '店状態の取得に失敗しました. ネットワーク接続を確認して下さい.'},
+        {errorCode: 2, errorMessage: '店状態の取得に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '店状態の取得に失敗しました.'}
+      ]
       const result = await axios.get(
           '/api/v1/status'
         ).catch(
           (error) => {
-            this.$awn.alert('店状態の取得に失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
@@ -239,8 +277,15 @@ export default {
       } else {
         this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: 0})
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIUpdateWaitingNoState() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '順番待ち番号の更新に失敗しました. ネットワーク接続を確認して下さい.'},
+        {errorCode: 2, errorMessage: '順番待ち番号の更新に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '順番待ち番号の更新に失敗しました.'}
+      ]
       const result = await axios.patch(
         '/api/v1/waiting', {
           waiting_numbers: this.updateWaitingNoState
@@ -250,13 +295,20 @@ export default {
           }
         }).catch(
           (error) => {
-            this.$awn.alert('順番待ち番号の更新に失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
       if (result !== undefined) console.log('info:Update waitingNo successed.')
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIIssueWaitNumber() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '順番待ち番号の発行に失敗しました. ネットワーク接続を確認してください.'},
+        {errorCode: 2, errorMessage: '順番待ち番号の発行に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '順番待ち番号の発行に失敗しました.'}
+      ]
       let result = await axios.post(
           '/api/v1/waiting', {}, {
           headers: {
@@ -264,15 +316,22 @@ export default {
           }
         }).catch(
           (error) => {
-            this.$awn.alert('順番待ち番号の発行に失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIWaitNumberReset() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '順番待ち番号のリセットに失敗しました. ネットワーク接続を確認してください.'},
+        {errorCode: 2, errorMessage: '順番待ち番号のリセットに失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '順番待ち番号のリセットに失敗しました.'}
+      ]
       let result = await axios.delete(
         '/api/v1/waiting', {
           headers: {
@@ -280,7 +339,7 @@ export default {
           }
         }).catch(
           (error) => {
-            this.$awn.alert('順番待ち番号のリセットに失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
@@ -289,30 +348,43 @@ export default {
           await this.callApiGetWaitNumber()
         }
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callApiGetWaitNumber() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '順番待ち番号の取得に失敗しました. ネットワーク接続を確認してください.'},
+        {errorCode: 2, errorMessage: '順番待ち番号の取得に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '順番待ち番号の取得に失敗しました.'}
+      ]
       let result = await axios.get(
           '/api/v1/waiting'
         ).catch(
           (error) => {
-            this.$awn.alert('順番待ち番号の取得に失敗しました.')
+            axiosErrorMessage = error.message
             console.log(error)
           }
         )
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPILogout() {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: 'ログアウト処理に失敗しました. ネットワーク接続を確認してください.'},
+        {errorCode: 2, errorMessage: '既にログアウトされています. '},
+        {errorCode: 3, errorMessage: 'ログアウト処理に失敗しました.'}
+      ]
       let result = await axios.delete(
         '/api/v1/auth/logout', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`,
           }
       }).catch(
         (error) => {
-          this.$awn.alert('ログアウトに失敗しました.')
-          console.log(error)
+          axiosErrorMessage = error.message
         }
       )
       if (result !== undefined) {
@@ -324,6 +396,7 @@ export default {
           this.$store.dispatch('commitUpdateLoginCredential', {credential})
         }
       }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
     }
   },
   setup() {
