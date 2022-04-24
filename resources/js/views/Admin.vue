@@ -194,7 +194,7 @@ export default {
       let numberListLabelHeight = numberListLabels.length > 0 ? numberListLabels[0].clientHeight : 45
       let numberListObjectHeight =  numberListObjects.length > 0 ? numberListObjects[0].clientHeight : 42
       
-      let maxObjectLength = this.cutWaitNoList.length > maxObjectLength ? this.cutWaitNoList.length : 0
+      let maxObjectLength = this.cutWaitNoList.length
       maxObjectLength = this.cutDoneNoList.length > maxObjectLength ? this.cutDoneNoList.length : maxObjectLength
       maxObjectLength = this.cutCallNoList.length > maxObjectLength ? this.cutCallNoList.length : maxObjectLength
       let outerNoList = document.getElementById('outer-number-list')
@@ -433,7 +433,6 @@ export default {
   }
   #outer-number-list {
     height: 65px;
-    margin-bottom: 20px;
   }
   .number-list-box {
     position: relative;
