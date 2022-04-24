@@ -1,6 +1,6 @@
 <template>
   <div class="header">
-    <h1 class="header-text">CUT SHOP FREESTYLE</h1>
+    <img class="header-img" :src="'/images/header_img.jpg'" alt="">
   </div>
 </template>
 
@@ -17,16 +17,18 @@ export default {
     display: flex;
     justify-content: center;
   }
-  .header-text{
+  .header-img{
     display: inline-block;
-    color: gold;
-    font-size: 1.8em;
+    width: 300px;
     margin: 0;
     padding: 20px 0px;
   }
   @media screen and (max-width: 480px) {
     .header-text {
       font-size: 1.65em;
+    }
+    .header-img {
+      width: 200px;
     }
   }
 </style>
