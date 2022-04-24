@@ -64,6 +64,10 @@
   animation-delay: -.16s
 }
 
+.awn-btn:hover {
+  cursor: pointer;
+}
+
 .awn-popup-loading-dots:after, .awn-popup-loading-dots:before {
   content: "";
   position: absolute;

@@ -15,7 +15,7 @@
           </tr>
         </table>
         <div class="login-button-row">
-          <button class="login-button" v-on:click="login">Login</button>
+          <button class="button" v-on:click="login">Login</button>
         </div>
       </div>
     </div>
@@ -143,10 +143,13 @@ export default {
     display: flex;
     flex-direction: row-reverse;
   }
-  .login-button {
+  .button {
     display: inline-block;
     margin-right: 10px;
     padding: 5px 15px;
     font-size: 1.1em;
+  }
+  .button:hover {
+    cursor: pointer;
   }
 </style>
