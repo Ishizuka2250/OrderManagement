@@ -7,11 +7,11 @@
         <table>
           <tr>
             <th>UserName</th>
-            <td><input class="input-box" type="text" v-model="email"></td>
+            <td><input class="input-box" type="text" v-model="email" maxlength="255"></td>
           </tr>
           <tr>
             <th>Password</th>
-            <td><input class="input-box" type="password" v-model="password"></td>
+            <td><input class="input-box" type="password" v-model="password" maxlength="16"></td>
           </tr>
         </table>
         <div class="login-button-row">
