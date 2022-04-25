@@ -19,7 +19,7 @@
         </div>
         <div class="button-container center-column">
           <button v-on:click="toggleSidebar" class="button button-margin hover-cursor">待ち番号の一覧を表示</button>
-          <button v-on:click="updateWaitingNo" class="button button-margin hover-cursor">最新の情報に更新</button>
+          <button v-on:click="updateWaitingNo" id="main-update-button" class="button button-margin hover-cursor">最新の情報に更新</button>
         </div>
       </div>
     </div>
@@ -47,7 +47,7 @@
           <p class="label white">お知らせ</p>
           <p class="shop-close-message white">本日の営業は終了しました.</p>
           <p class="shop-close-message white">またのご来店をお待ちしております.</p>
-          <button v-on:click="updateWaitingNo" class="shop-close-update-button hover-cursor">最新の情報に更新</button>
+          <button v-on:click="updateWaitingNo" id="sub-update-button" class="shop-close-update-button hover-cursor">最新の情報に更新</button>
         </div>
       </div>
     </div>
@@ -68,6 +68,7 @@ export default {
   data() {
     return {
       shopStatus: '',
+      updateButtonEnable: true,
       nowTime: this.getNowTime(),
       cutWaitNumberList: this.$store.getters['waitingNoStateView'],
     }
@@ -87,20 +88,37 @@ export default {
     },
   },
   methods: {
-    getNowTime() {
-      const now = new Date(Date.now())
-      return ('00' + now.getHours().toString()).slice(-2) + ':' + ('00' + now.getMinutes().toString()).slice(-2)
-    },
     async updateWaitingNo() {
+      this.disableUpdateButton()
       this.nowTime = this.getNowTime()
       await this.callApiGetWaitNumber()
       this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
       await this.updateCutStatus()
       this.$awn.info('最新の情報に更新しました.')
+      this.enableUpdateButton(5)
+    },
+    getNowTime() {
+      const now = new Date(Date.now())
+      return ('00' + now.getHours().toString()).slice(-2) + ':' + ('00' + now.getMinutes().toString()).slice(-2)
     },
     toggleSidebar() {
       const sidebar = document.getElementById('sidebar')
       sidebar.classList.toggle('show-sidebar')
+    },
+    async delay(executeFunction, second) {
+      return new Promise(resolve => {setTimeout(() => {resolve(executeFunction())}, second * 1000)})
+    },
+    async enableUpdateButton(second) {
+      const updateButton = this.$store.getters['shopStatus'] != 1 ?
+        document.getElementById("main-update-button") :
+        document.getElementById("sub-update-button")
+      this.delay(() => {updateButton.disabled = false}, second)
+    },
+    disableUpdateButton() {
+      const updateButton = this.$store.getters['shopStatus'] != 1 ?
+        document.getElementById("main-update-button") :
+        document.getElementById("sub-update-button")
+      updateButton.disabled = true
     },
     async updateCutStatus() {
       await this.callAPIGetShopStatus()
