@@ -7,6 +7,7 @@
           <button v-on:click="reset" class="button">リセット</button>
           <button v-on:click="logout" class="button">ログアウト</button>
           <button v-on:click="shopClose" class="button">営業終了</button>
+          <button v-on:click="openReadmePage" class="button">ヘルプ</button>
         </div>
         <div class="cut-status border-radius bg-white center">{{shopStatus}}</div>
         <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">
@@ -213,6 +214,9 @@ export default {
         default:
           return '-'
       }
+    },
+    openReadmePage() {
+      window.open('/readme/', '_blank')
     },
     apiErrorCode(axiosErrorMessage, errorMessages) {
       let errorCode = 0
@@ -485,7 +489,7 @@ export default {
     cursor: pointer;
   }
   .button {
-    padding: 10px 25px;
+    padding: 10px 20px;
     font-size: 1.2em;
   }
   .bg-white {

@@ -14,3 +14,4 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/app/', [App\Http\Controllers\AppController::class, 'index']);
 Route::get('/app/{any}', [App\Http\Controllers\AppController::class, 'index'])->where('any', '.*');
+Route::get('/readme/', function() {return view('readme');});
