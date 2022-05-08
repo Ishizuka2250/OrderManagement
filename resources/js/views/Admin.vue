@@ -135,6 +135,8 @@ export default {
       this.updateLocalWaitingNo()
     },
     async reset() {
+      console.log(this.$store.getters['cutWaitNoList'])
+      console.log('Issue the wait number.')
       this.$awn.confirm(
         '順番待ち番号をリセットしますか？',
         async () => {
@@ -328,8 +330,6 @@ export default {
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
       }
-      console.log(this.$store.getters['cutWaitNoList'])
-      console.log('Issue the wait number.')
       return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIWaitNumberReset() {
