@@ -78,7 +78,6 @@ export default {
     if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
     await this.callAPIGetShopStatus()
     this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
-    console.log('created.')
   },
   asyncComputed: {
     async cutNow() {
@@ -144,8 +143,6 @@ export default {
             if (this.cutNowNoList[0] === '-') await this.updateShopStatus(3)
             this.$awn.success('順番待ち番号をリセットしました.')
             console.log('info:The Wait Number State was reseted.')
-            console.log(this.$store.getters['cutWaitNoList'])
-            console.log('Issue the wait number.')
           }
         },
         () => {})
