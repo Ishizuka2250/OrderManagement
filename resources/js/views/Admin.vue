@@ -78,6 +78,7 @@ export default {
     if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
     await this.callAPIGetShopStatus()
     this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
+    console.log('created.')
   },
   asyncComputed: {
     async cutNow() {
@@ -132,8 +133,6 @@ export default {
     async issueWaitingNo() {
       await this.callAPIIssueWaitNumber()
       this.updateLocalWaitingNo()
-      console.log(this.$store.getters['cutWaitNoList'])
-      console.log('Issue the wait number.')
     },
     async reset() {
       this.$awn.confirm(
@@ -329,6 +328,8 @@ export default {
       if (result !== undefined) {
         this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
       }
+      console.log(this.$store.getters['cutWaitNoList'])
+      console.log('Issue the wait number.')
       return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
     async callAPIWaitNumberReset() {
