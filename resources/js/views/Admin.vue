@@ -132,6 +132,8 @@ export default {
     async issueWaitingNo() {
       await this.callAPIIssueWaitNumber()
       this.updateLocalWaitingNo()
+      console.log(this.$store.getters['cutWaitNoList'])
+      console.log('Issue the wait number.')
     },
     async reset() {
       this.$awn.confirm(
