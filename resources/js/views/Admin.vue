@@ -135,8 +135,6 @@ export default {
       this.updateLocalWaitingNo()
     },
     async reset() {
-      console.log(this.$store.getters['cutWaitNoList'])
-      console.log('Issue the wait number.')
       this.$awn.confirm(
         '順番待ち番号をリセットしますか？',
         async () => {
@@ -146,6 +144,8 @@ export default {
             if (this.cutNowNoList[0] === '-') await this.updateShopStatus(3)
             this.$awn.success('順番待ち番号をリセットしました.')
             console.log('info:The Wait Number State was reseted.')
+            console.log(this.$store.getters['cutWaitNoList'])
+            console.log('Issue the wait number.')
           }
         },
         () => {})
