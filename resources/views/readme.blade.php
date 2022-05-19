@@ -381,7 +381,7 @@ h4 {
     <p>本セクションでは店舗側で操作する「ログイン画面」「管理者画面」について解説します。</p>
     <h3 class="mume-header" id="%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E7%94%BB%E9%9D%A2">ログイン画面</h3>
     <p>セキュリティの観点から「管理者画面」は直接表示せずに「ログイン画面」を設けています。<br> 以下のURLをChromeブラウザへ入力することでログイン画面が表示されます。</p>
-    <div class="box"> http://hogehoge.com/app/login </div>
+    <div class="box"> https://cutshop-freestyle-waiting.tk/app/login </div>
     <h4 class="mume-header" id="%E7%AE%A1%E7%90%86%E8%80%85%E7%94%BB%E9%9D%A2%E3%81%B8%E3%81%AE%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E6%89%8B%E9%A0%86">管理者画面へのログイン手順</h4>
     <p>ブラウザのURL欄(緑色の枠)に指定されたログイン画面のURLを入力しEnterキーを押すと本システムのログイン画面が表示されます。<br> ※本マニュアルで掲載している画像は開発中画面を使用しているため、ブラウザのURL欄に表示されているURLは製品版のものと異なります。</p>
     <p>赤枠で囲った部分に管理者用の UserName と Password を入力して青枠の「Login」ボタンをクリックして下さい。<br> <img src="/images/readme_images/001.png" alt="画像"></p>
@@ -393,7 +393,7 @@ h4 {
     <h3 class="mume-header" id="%E7%AE%A1%E7%90%86%E8%80%85%E7%94%BB%E9%9D%A2">管理者画面</h3>
     <p>本画面は順番待ち状況がどのような状態になっているのか順番待ち状態をコントロールするための画面です。<br> この「管理者画面」で操作した結果が顧客が閲覧する「順番待ち状況表示画面」に反映されます。</p>
     <p>本画面を表示するためには「ログイン画面」での認証が必要となります。<br> ※ログイン状態がキープされている場合は以下のURLをChromeブラウザへ入力することで直接「管理者画面」を表示することも可能です。<br> ※未ログイン状態で以下のURLを入力するとログイン画面へ自動遷移します。<br> ※本画面はパソコン・画面幅が広いタブレットでの操作を想定しています。スマートフォンでの操作は動作対象外です。</p>
-    <div class="box"> http://hogehoge.com/app/admin </div>
+    <div class="box"> https://cutshop-freestyle-waiting.tk/app/admin </div>
     <h4 class="mume-header" id="%E5%8F%97%E4%BB%98%E7%95%AA%E5%8F%B7%E3%81%AE%E7%99%BA%E8%A1%8C">受付番号の発行</h4>
     <p>新しく受付番号を追加する場合は赤枠で囲った「受付番号発行ボタン」をクリックします。<br> <img src="/images/readme_images/005.png" alt="画像"></p>
     <p>正常に受付番号発行処理が行われると以下のように「待ち番号」欄に追加されます。<br> <img src="/images/readme_images/006.png" alt="画像"></p>
@@ -457,7 +457,7 @@ h4 {
     <p>本セクションでは顧客側が閲覧する「順番待ち状況表示画面」について解説します。</p>
     <h3 class="mume-header" id="%E9%A0%86%E7%95%AA%E5%BE%85%E3%81%A1%E7%8A%B6%E6%B3%81%E8%A1%A8%E7%A4%BA%E7%94%BB%E9%9D%A2">順番待ち状況表示画面</h3>
     <p>本画面は「管理者画面」で操作した情報を表示する顧客向けの画面です。<br> 店舗で使用する場合は以下のURLを顧客へ周知して下さい。</p>
-    <div class="box"> http://hogehoge.com/app/waiting </div>
+    <div class="box"> https://cutshop-freestyle-waiting.tk/app/waiting </div>
     <p>また、本画面で閲覧可能な情報は以下の通りです。</p>
     <ul>
       <li>現在カット中の待ち番号</li>
