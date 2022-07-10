@@ -106,15 +106,40 @@ class WaitNumberController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy()
+    public function destroy(Request $request)
     {
+        $validator = Validator::make($request->all(),[
+            'id' => ['integer']
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => 0,
+                'message' => 'The send parameter "id" is not integer.'
+            ], 400);
+        }
         $waitNumber = WaitNumber::all();
         if ($waitNumber->count() > 0) {
-            WaitNumber::truncate();
-            return response()->json([
-                'success' => 1,
-                'message' => 'The All Wait Number has been deleted.'
-            ], 200);
+            if (!is_null($request->id)) {
+                $number = WaitNumber::find($request->id);
+                if (!is_null($number)) {
+                    WaitNumber::destroy($request->id);
+                    return response()->json([
+                        'success' => 1,
+                        'message' => 'The Waiting Number ' . $number->waiting_no . ' has been deleted.'
+                    ], 200);
+                }else{
+                    return response()->json([
+                        'success' => 0,
+                        'message' => 'The Wait Number ID:' . $request->id . ' already deleted.'
+                    ], 200);
+                }
+            } else {
+                WaitNumber::truncate();
+                return response()->json([
+                    'success' => 1,
+                    'message' => 'The All Wait Number has been deleted.'
+                ], 200);
+            }
         } else {
             return response()->json([
                 'success' => 0,
