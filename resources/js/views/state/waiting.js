@@ -35,39 +35,46 @@ const getters = {
     let cutNowNo = state.waitingNoState
       .filter(item => item.isCutNow)
       .map(item => item.waitingNo)
-    return cutNowNo.length > 0 ? ('00' + cutNowNo[0]).slice(-3) : '-'
+    return cutNowNo.length > 0 ? cutNowNo[0] : '-'
   },
   cutWaitNoList(state) {
     return state.waitingNoState
       .filter(item => item.isCutWait)
-      .map(item => ('00' + item.waitingNo).slice(-3))
+      .map(item => item.waitingNo)
   },
   cutDoneNoList(state) {
     return state.waitingNoState
       .filter(item => item.isCutDone)
-      .map(item => ('00' + item.waitingNo).slice(-3))
+      //.map(item => ('00' + item.waitingNo).slice(-3))
+      .map(item => item.waitingNo)
   },
   cutCallNoList(state) {
     return state.waitingNoState
       .filter(item => item.isCutCall)
-      .map(item => ('00' + item.waitingNo).slice(-3))
+      .map(item => item.waitingNo)
   },
   waitingNoStateView(state) {
     let waitingNoAndCallNoList = []
     state.waitingNoState
       .filter(item => item.isCutCall)
       .forEach(item => waitingNoAndCallNoList.push({
-        waitingNo: ('00' + item.waitingNo).slice(-3),
+        waitingNo: item.waitingNo,
         isCutCall: true
       }))
     state.waitingNoState
       .filter(item => item.isCutWait)
       .forEach(item => waitingNoAndCallNoList.push({
-        waitingNo: ('00' + item.waitingNo).slice(-3),
+        waitingNo: item.waitingNo,
         isCutCall: false
       }))
     return waitingNoAndCallNoList
   },
+  nextWaitingNo(state) {
+    let waitingNo = 0
+    state.waitingNoState
+      .forEach(item => waitingNo = waitingNo < item.waitingNo ? item.waitingNo : waitingNo)
+    return waitingNo + 1
+  }
 }
 
 const actions = {
