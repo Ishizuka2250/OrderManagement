@@ -40,14 +40,6 @@ export default {
       password: ''
     }
   },
-  created: async function() {
-    await this.apiCallLoginCheck()
-    if (this.$store.getters['isLogin']) {
-      this.$router.push('admin')
-      this.$awn.info('自動ログインしました.')
-      console.log('info:System auto login.')
-    }
-  },
   methods: {
     async login() {
       if (!this.loginValidation()) {
@@ -121,31 +113,6 @@ export default {
       }
       this.$store.dispatch('commitUpdateLoginCredential', {credential})
     },
-    async apiCallLoginCheck() {
-      let accessToken = localStorage.getItem('AccessToken')
-      let credential = {
-        isLogin: false,
-        accessToken: ''
-      }
-
-      if (accessToken) {
-        const result = await axios.get(
-          '/api/v1/auth/check', {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          }).catch(
-            (error) => console.log('info:The Old Access Token has been deleted due to session timeout.')
-          )
-        if (result !== undefined) {
-            if (result.data.success) {
-              credential.isLogin = true
-              credential.accessToken = accessToken
-            }
-        }
-      }
-      this.$store.dispatch('commitUpdateLoginCredential', {credential})
-    }
   }
 }
 </script>
