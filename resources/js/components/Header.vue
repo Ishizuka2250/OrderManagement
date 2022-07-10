@@ -13,6 +13,7 @@ export default {
 <style>
   .header {
     width: 100%;
+    height: 150px;
     background: black;
     display: flex;
     justify-content: center;
