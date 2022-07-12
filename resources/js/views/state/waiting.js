@@ -74,6 +74,14 @@ const getters = {
     state.waitingNoState
       .forEach(item => waitingNo = waitingNo < item.waitingNo ? item.waitingNo : waitingNo)
     return waitingNo + 1
+  },
+  latestWaitingID(state) {
+    if (state.waitingNoState.length > 0) {
+      let latestState = state.waitingNoState[state.waitingNoState.length - 1]
+      return latestState.isCutWait || latestState.isCutCall ? latestState.id : 0
+    } else {
+      return 0
+    }
   }
 }
 
@@ -91,6 +99,9 @@ const actions = {
   commitResetUpdateFlg({commit}) {
     commit('resetUpdateFlg')
   },
+  commitResetWaitingNoState({commit}) {
+    commit('resetWaitingNoState')
+  }
 }
 
 const mutations = {
