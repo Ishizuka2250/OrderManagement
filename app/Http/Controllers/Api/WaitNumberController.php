@@ -125,6 +125,7 @@ class WaitNumberController extends Controller
                     WaitNumber::destroy($request->id);
                     return response()->json([
                         'success' => 1,
+                        'wait_number' => WaitNumber::all(),
                         'message' => 'The Waiting Number ' . $number->waiting_no . ' has been deleted.'
                     ], 200);
                 }else{
