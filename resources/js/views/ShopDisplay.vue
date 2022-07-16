@@ -40,7 +40,6 @@ export default {
   },
   data() {
     return {
-      shopStatus: '',
       cutWaitNoList: [],
       cutDoneNoList: [],
       cutCallNoList: [],
@@ -54,10 +53,9 @@ export default {
     await this.callApiGetWaitNumber()
     this.updateLocalWaitingNo()
     if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
-    await this.callAPIGetShopStatus()
     this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
   },
-  mounted: function (){
+  mounted: function () {
     document.addEventListener('keydown', this.keydownEvent)
   },
   computed: {
@@ -71,11 +69,27 @@ export default {
         this.cutDoneNoList.push(this.cutNowNoList.shift())
         if (this.cutDoneNoList.indexOf('-') !== -1) {
           this.removeEmptyNumber()
+          await this.updateShopStatus(2)
         }
-      }else if (this.cutNowNoList.length === 0) {
+      } else if (this.cutNowNoList.length === 0) {
         this.cutNowNoList.push('-')
+        await this.updateShopStatus(3)
         this.removeEmptyNumber()
       }
+      this.waitingNoUpdate()
+      return this.cutNowNoList[0]
+    }
+  },
+  watch: {
+    updateWaitingNoState: async function() {
+      if (this.updateWaitingNoState.length > 0) {
+        await this.callAPIUpdateWaitingNoState()
+        this.$store.dispatch('commitResetUpdateFlg')
+      }
+    },
+  },
+  methods: {
+    waitingNoUpdate() {
       this.sortCutWait()
       this.sortCutDone()
       this.sortCutCall()
@@ -89,18 +103,7 @@ export default {
       })
       this.updateWaitingNoState = this.$store.getters['updateWaitingNoState']
       this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
-      return this.cutNowNoList[0]
-    }
-  },
-  watch: {
-    updateWaitingNoState: async function() {
-      if (this.updateWaitingNoState.length > 0) {
-        await this.callAPIUpdateWaitingNoState()
-        this.$store.dispatch('commitResetUpdateFlg')
-      }
     },
-  },
-  methods: {
     removeEmptyNumber() {
       this.cutDoneNoList.indexOf('-') !== -1 ?
         this.cutDoneNoList.splice(this.cutDoneNoList.indexOf('-'), 1) : ''
@@ -138,6 +141,8 @@ export default {
         this.cutNowToWaiting()
       } else if(event.code === 'NumpadAdd') {
         await this.issueWaitingNo()
+      } else if(event.code === 'NumpadSubtract') {
+        await this.removeLatestWaitingNo()
       } else if(event.code === 'Numpad9') {
         this.waitingToCutCall()
       } else if(event.code === 'Numpad3') {
@@ -146,11 +151,25 @@ export default {
         this.cutCallToCutNow()
       } else if(event.code === 'Numpad1') {
         this.cutNowToCutCall()
+      } else if (event.code === 'Numpad5') {
+        this.cutNowToCutDone()
       }
+    },
+    async updateShopStatus(shopStatusID) {
+      await this.callAPIUpdateShopStatus(shopStatusID)
     },
     async issueWaitingNo() {
       await this.callAPIIssueWaitNumber()
       this.updateLocalWaitingNo()
+      this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+    },
+    async removeLatestWaitingNo() {
+      let latestWaitingID = this.$store.getters['latestWaitingID']
+      if (latestWaitingID > 0) {
+        await this.callAPIRemoveWaitNumber(latestWaitingID)
+        this.updateLocalWaitingNo()
+        this.cutWaitNumberList = this.$store.getters['waitingNoStateView']
+      }
     },
     waitingToCutNow() {
       if (this.cutWaitNoList.length > 0) {
@@ -168,12 +187,15 @@ export default {
     waitingToCutCall() {
       if (this.cutWaitNoList.length > 0) {
         this.cutCallNoList.push(this.cutWaitNoList.shift())
+        if (this.cutNowNoList[0] === '-') this.waitingNoUpdate()
       }
     },
     cutCallToWaiting() {
       if (this.cutCallNoList.length > 0) {
         this.cutWaitNoList.push(this.cutCallNoList.shift())
+        if (this.cutNowNoList[0] === '-') this.waitingNoUpdate()
       }
+
     },
     cutCallToCutNow() {
       if (this.cutCallNoList.length > 0) {
@@ -186,6 +208,13 @@ export default {
         if (this.cutDoneNoList.length > 0) {
           this.cutNowNoList.push(this.cutDoneNoList.shift())
         }
+      }
+    },
+    cutNowToCutDone() {
+      if (this.cutNowNoList[0] !== '-' ) {
+        this.cutDoneNoList.push(this.cutNowNoList.shift())
+      } else if (this.cutDoneNoList.length > 0) {
+        this.cutNowNoList.push(this.cutDoneNoList.shift())
       }
     },
     toggleSidebar() {
@@ -211,25 +240,28 @@ export default {
       }
       return errorCode
     },
-    async callAPIGetShopStatus() {
+    async callAPIUpdateShopStatus(statusID) {
       let axiosErrorMessage
       let errorMessages = [
-        {errorCode: 1, errorMessage: '店状態の取得に失敗しました. ネットワーク接続を確認して下さい.'},
-        {errorCode: 2, errorMessage: '店状態の取得に失敗しました. 再ログインして下さい.'},
-        {errorCode: 3, errorMessage: '店状態の取得に失敗しました.'}
+        {errorCode: 1, errorMessage: '店状態の変更に失敗しました. ネットワーク接続を確認して下さい.'},
+        {errorCode: 2, errorMessage: '店状態の変更に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '店状態の変更に失敗しました.'}
       ]
-      const result = await axios.get(
-          '/api/v1/status'
-        ).catch(
+      const result = await axios.patch(
+        '/api/v1/status', {
+          'status_id': statusID
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          }
+        }).catch(
           (error) => {
             axiosErrorMessage = error.message
             console.log(error)
           }
         )
       if (result !== undefined) {
-        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: result.data.status_id})
-      } else {
-        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: 0})
+        this.$store.dispatch('commitUpdateShopStatus', {shopStatusID: statusID})
       }
       return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
@@ -256,6 +288,33 @@ export default {
       if (result !== undefined) console.log('info:Update waitingNo successed.')
       return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
+    async callAPIRemoveWaitNumber(waitingNoID) {
+      let axiosErrorMessage
+      let errorMessages = [
+        {errorCode: 1, errorMessage: '順番待ち番号の削除に失敗しました. ネットワーク接続を確認してください.'},
+        {errorCode: 2, errorMessage: '順番待ち番号の削除に失敗しました. 再ログインして下さい.'},
+        {errorCode: 3, errorMessage: '順番待ち番号の削除に失敗しました.'}
+      ]
+      let result = await axios.delete(
+          '/api/v1/waiting', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+            },
+            data: {
+              id: waitingNoID
+            }
+          }).catch(
+          (error) => {
+            axiosErrorMessage = error.message
+            console.log(error)
+          }
+        )
+      if (result !== undefined) {
+        this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+        console.log('info:Remove waitingNo successed.')
+      }
+      return this.apiErrorCode(axiosErrorMessage, errorMessages)
+    },
     async callAPIIssueWaitNumber() {
       let axiosErrorMessage
       let errorMessages = [
@@ -275,7 +334,11 @@ export default {
           }
         )
       if (result !== undefined) {
-        this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+        if (result.data.wait_number.length > 0) {
+          this.$store.dispatch('commitUpdateAPIWaitingNoState', {updateObject: result.data.wait_number})
+        } else {
+          this.$store.dispatch('commitResetWaitingNoState')
+        }
       }
       return this.apiErrorCode(axiosErrorMessage, errorMessages)
     },
