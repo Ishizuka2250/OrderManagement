@@ -9,13 +9,14 @@
           <button v-on:click="shopClose" class="button">営業終了</button>
           <button v-on:click="openReadmePage" class="button">ヘルプ</button>
         </div>
+        <button v-on:click="openForStoreDisplayPage" class="wide-button">店舗用画面表示</button>
         <div class="cut-status border-radius bg-white center">{{shopStatus}}</div>
         <Draggable v-model="cutNowNoList" group="cutNo" class="cut-number border-radius bg-white center">
           <div class="internal-cut-number">
             {{cutNow}}
           </div>
         </Draggable>
-        <button v-on:click="issueWaitingNo" class="issue-Wait-button">受付番号発行</button>
+        <button v-on:click="issueWaitingNo" class="wide-button">受付番号発行</button>
         <div id="outer-number-list" class="space-between">
           <div class="number-list-box center-column">
             <div class="number-list-label center">カット済み</div>
@@ -217,6 +218,9 @@ export default {
     },
     openReadmePage() {
       window.open('/readme/', '_blank')
+    },
+    openForStoreDisplayPage() {
+      window.open('/app/display/', '_blank')
     },
     apiErrorCode(axiosErrorMessage, errorMessages) {
       let errorCode = 0
@@ -479,14 +483,14 @@ export default {
     display: flex;
     justify-content: space-between;
   }
-  .issue-Wait-button {
+  button:hover {
+    cursor: pointer;
+  }
+  .wide-button {
     width: 100%;
     font-size: 1.2em;
     padding: 10px 0;
     margin-bottom: 20px;
-  }
-  button:hover {
-    cursor: pointer;
   }
   .button {
     padding: 10px 20px;
