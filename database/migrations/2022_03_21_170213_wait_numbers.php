@@ -16,6 +16,7 @@ return new class extends Migration
         schema::create('wait_numbers', function(Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('waiting_no')->nullable(false)->unique();
+            $table->string('card_id')->nullable(false)->unique();
             $table->boolean('is_cut_wait')->nullable(false);
             $table->boolean('is_cut_done')->nullable(false);
             $table->boolean('is_cut_call')->nullable(false);

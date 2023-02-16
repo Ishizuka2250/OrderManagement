@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Faker\Core\Number;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +11,7 @@ class WaitNumber extends Model
 
     protected $fillable = [
         'waiting_no',
+        'card_id',
         'is_cut_wait',
         'is_cut_done',
         'is_cut_call',
@@ -24,6 +24,7 @@ class WaitNumber extends Model
 
     public static $rules = [
         'waiting_no' => ['required', 'integer'],
+        'card_id' => ['required', 'integer'],
         'is_cut_wait' => ['required', 'boolean'],
         'is_cut_done' => ['required', 'boolean'],
         'is_cut_call' => ['required', 'boolean'],
