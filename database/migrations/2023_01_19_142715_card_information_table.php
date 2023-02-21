@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('card_informations', function(Blueprint $table) {
+        Schema::create('card_information', function(Blueprint $table) {
             $table->id();
             $table->integer('waiting_no')->nullable(false);
             $table->string('idm')->nullable(false)->unique();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('card_informations');
+        Schema::dropIfExists('card_information');
     }
 };
