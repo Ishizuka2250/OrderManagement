@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\WaitNumber;
+use App\Models\CardInformation;
+use Exception;
+
 
 class WaitNumberController extends Controller
 {
@@ -31,24 +34,56 @@ class WaitNumberController extends Controller
      */
     public function store(Request $request)
     {
+        if ($this->issueWaitNumber()) {
+            return response()->json([
+                'success' => 1,
+                'wait_number' => WaitNumber::all(),
+                'message' => 'Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
+            ], 201);
+        } else {
+            return response()->json([
+                'success' => 0,
+                'errorcode' => 1,
+                'message' => 'Error: Failed to issue Waiting Number'
+            ], 500);
+        }
+    }
+
+    public function issueWaitNumber()
+    {
         $waitNumber = new WaitNumber;
         if ($waitNumber->all()->count() > 0) {
             $waitingNumber = WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
-        }else{
+        } else {
             $waitingNumber = 1;
         }
-        $waitNumber->create([
-            'waiting_no' => $waitingNumber,
-            'is_cut_wait' => true,
-            'is_cut_done' => false,
-            'is_cut_call' => false,
-            'is_cut_now' => false,
-        ]);
-        return response()->json([
-            'success' => 1,
-            'wait_number' => WaitNumber::all(),
-            'message' => 'Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
-        ], 201);
+
+        $cardInfo = $this->getCardInfo($waitingNumber);
+        if ($cardInfo === null) return false;
+        
+        try {
+            $waitNumber->create([
+                'waiting_no' => $waitingNumber,
+                'card_id' => $cardInfo->id,
+                'is_cut_wait' => true,
+                'is_cut_done' => false,
+                'is_cut_call' => false,
+                'is_cut_now' => false,
+            ]);
+            return true;
+        } catch(\Exception $e) {
+            return false;
+        }
+    }
+
+    private function getCardInfo($WaitingNumber) {
+        $cardInfo = CardInformation::where('waiting_no', $WaitingNumber)->where('available', true)->first();
+        
+        if ($cardInfo !== null) {
+            return $cardInfo;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -82,22 +117,39 @@ class WaitNumberController extends Controller
             ], 400);
         }
 
+        $updateCount = $this->waitnumberUpdate(request()->waiting_numbers);
+
+        if ($updateCount > -1) {
+            return response()->json([
+                'success' => 1,
+                'update_count' => $updateCount,
+                'message' => 'Update OK.'
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => 0,
+                'errorcode' => 1,
+                'message' => 'Error: Failed to update Waiting Number.'
+            ], 500);
+        }
+    }
+
+    private function waitnumberUpdate($WaitingNumbers) {
         $updateCount = 0;
-        foreach(request()->waiting_numbers as $waitNumber) {
+        foreach($WaitingNumbers as $waitNumber) {
             $target = WaitNumber::find($waitNumber['id']);
             $target->is_cut_wait = $waitNumber['is_cut_wait'];
             $target->is_cut_done = $waitNumber['is_cut_done'];
             $target->is_cut_now = $waitNumber['is_cut_now'];
             $target->is_cut_call = $waitNumber['is_cut_call'];
-            $target->save();
+            try {
+                $target->save();
+            } catch (\Exception $e) {
+                return -1;
+            }
             $updateCount++;
         }
-
-        return response()->json([
-            'success' => 1,
-            'update_count' => $updateCount,
-            'message' => 'Update OK.'
-        ], 200);
+        return $updateCount;
     }
 
     /**
