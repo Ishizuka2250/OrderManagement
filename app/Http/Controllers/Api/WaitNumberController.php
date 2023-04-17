@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\WaitNumber;
 use App\Models\CardInformation;
+use App\Models\User;
 use Exception;
 
 
@@ -26,7 +27,7 @@ class WaitNumberController extends Controller
         ], 200);
     }
 
-    /**
+    /**z
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -34,7 +35,57 @@ class WaitNumberController extends Controller
      */
     public function store(Request $request)
     {
-        if ($this->issueWaitNumber()) {
+        $validator = Validator::make($request->all(), [
+            'key' => ['required', 'string']
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => 0,
+                'errorcode' => 1,
+                'message' => $validator->errors()
+            ], 400);
+        }
+
+        
+        $nextWaitingNumber = $this->getNextWaitingNo($request->key);
+        
+        if ($nextWaitingNumber < 1) {
+            $issueError = $nextWaitingNumber;
+            switch ($issueError) {
+                case -1:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 2,
+                        'message' => 'Error: Authorization a master_key but not registered the Felica Card.'
+                    ], 400);
+                case -2:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 3,
+                        'message' => 'Error: A Touched Felica Card is not registered in the Database.'
+                    ], 400);
+                case -3:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 4,
+                        'message' => 'Error: The Felica Card is already touched.'
+                    ], 400);
+                case -4:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 5,
+                        'message' => 'Error: A Touched Felica Card or number card in between is not registered in the Database.'
+                    ], 400);
+                default:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 6,
+                        'message' => 'Error: Failed to issue waiting number.'
+                    ], 400);
+            }
+        }
+
+        if ($this->issueWaitNumber($nextWaitingNumber)) {
             return response()->json([
                 'success' => 1,
                 'wait_number' => WaitNumber::all(),
@@ -43,42 +94,90 @@ class WaitNumberController extends Controller
         } else {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 1,
-                'message' => 'Error: Failed to issue Waiting Number'
+                'errorcode' => 7,
+                'message' => 'Error: Failed to issue Waiting Number due to the Database Server'
             ], 500);
         }
     }
 
-    public function issueWaitNumber()
+    public function issueWaitNumber(int $NextWaitingNumber)
     {
-        $waitNumber = new WaitNumber;
-        if ($waitNumber->all()->count() > 0) {
-            $waitingNumber = WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
-        } else {
-            $waitingNumber = 1;
+        $currentWaitingNo = $this->getCurrentWaitingNo();
+        for ($wn = $currentWaitingNo + 1; $wn <= $NextWaitingNumber; $wn++) {
+            try {
+                # 待ち番号発行 (順番飛ばしでタッチされた場合は間の番号も発行)
+                WaitNumber::create([
+                    'waiting_no' => $wn,
+                    'card_id' => $this->getCardInfoFromWaitingNo($wn)->id,
+                    'is_cut_wait' => true,
+                    'is_cut_done' => false,
+                    'is_cut_call' => false,
+                    'is_cut_now' => false,
+                ]);
+            } catch(\Exception $e) {
+                return false;
+            }
         }
+        return true;
+    }
 
-        $cardInfo = $this->getCardInfo($waitingNumber);
-        if ($cardInfo === null) return false;
-        
-        try {
-            $waitNumber->create([
-                'waiting_no' => $waitingNumber,
-                'card_id' => $cardInfo->id,
-                'is_cut_wait' => true,
-                'is_cut_done' => false,
-                'is_cut_call' => false,
-                'is_cut_now' => false,
-            ]);
-            return true;
-        } catch(\Exception $e) {
-            return false;
+    public function getCurrentWaitingNo()
+    {
+        return WaitNumber::all()->count();
+    }
+
+    public function getNextWaitingNo(String $keyOrCardID)
+    {
+        # $keyOrCardID -> masterkey (ブラウザ操作の場合)
+        $masterKeyUser = User::where('master_key', '=', $keyOrCardID)->first();
+        if ($masterKeyUser !== null) {
+            if (WaitNumber::all()->count() > 0) {
+                $waitingNumber = WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
+            } else {
+                $waitingNumber = 1;
+            }
+            
+            $cardInfo = $this->getCardInfoFromWaitingNo((int)$waitingNumber);
+            if ($cardInfo === null) {
+                return -1;
+            } else {
+                return $waitingNumber;
+            }
+        }
+        # $key -> カードID (Felica端末からタッチされた場合)
+        else{
+            $cardInfo = $this->getCardInfoFromCardID((string)$keyOrCardID);
+            
+            # タッチされたカードがDBに登録されているか？
+            if ($cardInfo === null) return -2;
+            
+            $currentWaitingNo = $this->getCurrentWaitingNo();
+            $nextWaitingNo = $cardInfo->waiting_no;
+            
+            # 既にタッチされたカードか？
+            if ($currentWaitingNo >= $nextWaitingNo) return -3;
+            
+            # タッチされたカードが間飛ばしの可能性も考慮して確認
+            for ($wn = $currentWaitingNo + 1; $wn <= $nextWaitingNo; $wn++) {
+                # タッチされたカード・その間のカードはDBに登録されているか？
+                if ($this->getCardInfoFromWaitingNo($wn) === null) return -4;
+            }
+
+            return $nextWaitingNo;
         }
     }
 
-    private function getCardInfo($WaitingNumber) {
+    private function getCardInfoFromWaitingNo(Int $WaitingNumber) {
         $cardInfo = CardInformation::where('waiting_no', $WaitingNumber)->where('available', true)->first();
-        
+        if ($cardInfo !== null) {
+            return $cardInfo;
+        } else {
+            return null;
+        }
+    }
+
+    private function getCardInfoFromCardID(String $CardID) {
+        $cardInfo = CardInformation::where('idm', '=' , $CardID)->where('available', true)->first();
         if ($cardInfo !== null) {
             return $cardInfo;
         } else {
