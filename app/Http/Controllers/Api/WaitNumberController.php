@@ -9,7 +9,7 @@ use App\Models\WaitNumber;
 use App\Models\CardInformation;
 use App\Models\User;
 use Exception;
-
+use Illuminate\Support\Facades\Log;
 
 class WaitNumberController extends Controller
 {
@@ -45,7 +45,6 @@ class WaitNumberController extends Controller
                 'message' => $validator->errors()
             ], 400);
         }
-
         
         $nextWaitingNumber = $this->getNextWaitingNo($request->key);
         
@@ -95,7 +94,7 @@ class WaitNumberController extends Controller
             return response()->json([
                 'success' => 0,
                 'errorcode' => 7,
-                'message' => 'Error: Failed to issue Waiting Number due to the Database Server'
+                'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
             ], 500);
         }
     }
@@ -144,7 +143,7 @@ class WaitNumberController extends Controller
                 return $waitingNumber;
             }
         }
-        # $key -> カードID (Felica端末からタッチされた場合)
+        # $keyOrCardID -> カードID (Felica端末からタッチされた場合)
         else{
             $cardInfo = $this->getCardInfoFromCardID((string)$keyOrCardID);
             
@@ -206,7 +205,7 @@ class WaitNumberController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'waiting_numbers' => ['required', 'array']
+            'key' => ['required', 'string']
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -215,22 +214,93 @@ class WaitNumberController extends Controller
                 'message' => $validator->errors()
             ], 400);
         }
-
-        $updateCount = $this->waitnumberUpdate(request()->waiting_numbers);
-
-        if ($updateCount > -1) {
-            return response()->json([
-                'success' => 1,
-                'update_count' => $updateCount,
-                'message' => 'Update OK.'
-            ], 200);
-        } else {
-            return response()->json([
-                'success' => 0,
-                'errorcode' => 1,
-                'message' => 'Error: Failed to update Waiting Number.'
-            ], 500);
+        $keyOrCardID = $request->key;
+        $masterKeyUser = User::where('master_key', '=', $keyOrCardID)->first();
+        
+        # $keyOrCardID -> masterkey (ブラウザ操作の場合)
+        if ($masterKeyUser !== null) {
+            $validator = Validator::make($request->all(), [
+                'waiting_numbers' => ['required', 'array']
+            ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => 0,
+                    'errorcode' => 2,
+                    'message' => $validator->errors()
+                ], 400);
+            }
+            
+            $updateCount = $this->updateFromWebApplication($request->waiting_numbers);
+            
+            if ($updateCount < 0) {
+                $updateError = $updateCount;
+                switch ($updateError) {
+                    case -1:
+                        return response()->json([
+                            'success' => 0,
+                            'errorcode' => 3,
+                            'message' => 'Error: waiting_numbers array is include unrecognizable value.'
+                        ], 400);
+                    case -2:
+                        return response()->json([
+                            'success' => 0,
+                            'errorcode' => 4,
+                            'message' => 'Error: waiting_numbers array is include unexist id.'
+                        ], 400);
+                    case -3:
+                        return response()->json([
+                            'success' => 0,
+                            'errorcode' => 5,
+                            'message' => 'Error: Mutable status is one state only.'
+                        ], 400);
+                    case -4:
+                        return response()->json([
+                            'success' => 0,
+                            'errorcode' => 6,
+                            'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
+                        ], 500);
+                }
+            } else {
+                return response()->json([
+                    'success' => 1,
+                    'update_count' => $updateCount,
+                    'message' => 'Waiting Numbers in web application operation were update complete.'
+                ], 200);
+            }
         }
+        # $keyOrCardID -> カードID (Felica端末からタッチされた場合)
+        else {
+        }
+    }
+
+    private function updateFromWebApplication($UpdateWaitingNumbers) {
+        
+        $checkResult = $this->updateFormatCheck($UpdateWaitingNumbers);
+        if ($checkResult < 0) return $checkResult;
+        
+        $updateCount = $this->waitnumberUpdate($UpdateWaitingNumbers);
+        return $updateCount;
+    }
+
+    private function updateFormatCheck($UpdateWaitingNumbers) {
+        foreach ($UpdateWaitingNumbers as $updateWaitingNumber) {
+            # waiting_numbersデータに対象のキーがセットされているか？
+            if (! $this->arrayKeysExists(['id', 'is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'], $updateWaitingNumber)) return -1;
+            # 変更対象のレコードが存在するか？
+            if (WaitNumber::find($updateWaitingNumber['id']) === null) return -2;
+            # 変更する待ち番号のステータスは1つだけか？
+            $checkSum = 0;
+            foreach(['is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'] as $key) $checkSum += $updateWaitingNumber[$key];
+            if ($checkSum != 1) return -3;
+        }
+        return 0;
+    }
+
+    private function arrayKeysExists(array $CheckKeys, array $SearchArray) {
+        foreach ($CheckKeys as $key) {
+            if (!array_key_exists($key, $SearchArray)) return false;
+        }
+        return true;
     }
 
     private function waitnumberUpdate($WaitingNumbers) {
@@ -244,7 +314,8 @@ class WaitNumberController extends Controller
             try {
                 $target->save();
             } catch (\Exception $e) {
-                return -1;
+                # 対象データの更新に失敗した場合
+                return -4;
             }
             $updateCount++;
         }
