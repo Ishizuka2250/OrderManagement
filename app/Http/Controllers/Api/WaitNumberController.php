@@ -9,6 +9,7 @@ use App\Models\WaitNumber;
 use App\Models\CardInformation;
 use App\Models\User;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 class WaitNumberController extends Controller
@@ -27,7 +28,7 @@ class WaitNumberController extends Controller
         ], 200);
     }
 
-    /**z
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -46,9 +47,11 @@ class WaitNumberController extends Controller
             ], 400);
         }
         
+        # 次に発行する待ち番号を取得する
         $nextWaitingNumber = $this->getNextWaitingNo($request->key);
         
         if ($nextWaitingNumber < 1) {
+            # 待ち番号取得中にエラーが発生した場合
             $issueError = $nextWaitingNumber;
             switch ($issueError) {
                 case -1:
@@ -84,13 +87,15 @@ class WaitNumberController extends Controller
             }
         }
 
-        if ($this->issueWaitNumber($nextWaitingNumber)) {
+        # 待ち番号発行 (順番飛ばしでタッチされた場合も考慮して発行)
+        if ($this->issueWaitNumbers($nextWaitingNumber)) {
             return response()->json([
                 'success' => 1,
                 'wait_number' => WaitNumber::all(),
                 'message' => 'Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
             ], 201);
         } else {
+            # 待ち番号発行に失敗した場合
             return response()->json([
                 'success' => 0,
                 'errorcode' => 7,
@@ -99,23 +104,30 @@ class WaitNumberController extends Controller
         }
     }
 
-    public function issueWaitNumber(int $NextWaitingNumber)
+    public function issueWaitNumbers(int $NextWaitingNumber)
     {
         $currentWaitingNo = $this->getCurrentWaitingNo();
+        # 待ち番号発行 (順番飛ばしでタッチされた場合は間の番号も発行)
         for ($wn = $currentWaitingNo + 1; $wn <= $NextWaitingNumber; $wn++) {
-            try {
-                # 待ち番号発行 (順番飛ばしでタッチされた場合は間の番号も発行)
-                WaitNumber::create([
-                    'waiting_no' => $wn,
-                    'card_id' => $this->getCardInfoFromWaitingNo($wn)->id,
-                    'is_cut_wait' => true,
-                    'is_cut_done' => false,
-                    'is_cut_call' => false,
-                    'is_cut_now' => false,
-                ]);
-            } catch(\Exception $e) {
-                return false;
-            }
+            if (!$this->issueWaitNumber($wn)) return false;
+        }
+        return true;
+    }
+
+    public function issueWaitNumber(int $WaitingNumber)
+    {
+        # 引数で指定した待ち番号を発行する
+        try {
+            WaitNumber::create([
+                'waiting_no' => $WaitingNumber,
+                'card_id' => $this->getCardInfoFromWaitingNo($WaitingNumber)->id,
+                'is_cut_wait' => true,
+                'is_cut_done' => false,
+                'is_cut_call' => false,
+                'is_cut_now' => false,
+            ]);
+        } catch(\Exception $e) {
+            return false;
         }
         return true;
     }
@@ -167,6 +179,7 @@ class WaitNumberController extends Controller
     }
 
     private function getCardInfoFromWaitingNo(Int $WaitingNumber) {
+        # 待ち番号からカード情報レコードを取得
         $cardInfo = CardInformation::where('waiting_no', $WaitingNumber)->where('available', true)->first();
         if ($cardInfo !== null) {
             return $cardInfo;
@@ -176,6 +189,7 @@ class WaitNumberController extends Controller
     }
 
     private function getCardInfoFromCardID(String $CardID) {
+        # idmと一致するカード情報レコードを取得
         $cardInfo = CardInformation::where('idm', '=' , $CardID)->where('available', true)->first();
         if ($cardInfo !== null) {
             return $cardInfo;
@@ -231,86 +245,196 @@ class WaitNumberController extends Controller
             }
             
             $updateCount = $this->updateFromWebApplication($request->waiting_numbers);
-            
-            if ($updateCount < 0) {
-                $updateError = $updateCount;
-                switch ($updateError) {
-                    case -1:
-                        return response()->json([
-                            'success' => 0,
-                            'errorcode' => 3,
-                            'message' => 'Error: waiting_numbers array is include unrecognizable value.'
-                        ], 400);
-                    case -2:
-                        return response()->json([
-                            'success' => 0,
-                            'errorcode' => 4,
-                            'message' => 'Error: waiting_numbers array is include unexist id.'
-                        ], 400);
-                    case -3:
-                        return response()->json([
-                            'success' => 0,
-                            'errorcode' => 5,
-                            'message' => 'Error: Mutable status is one state only.'
-                        ], 400);
-                    case -4:
-                        return response()->json([
-                            'success' => 0,
-                            'errorcode' => 6,
-                            'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
-                        ], 500);
-                }
-            } else {
-                return response()->json([
-                    'success' => 1,
-                    'update_count' => $updateCount,
-                    'message' => 'Waiting Numbers in web application operation were update complete.'
-                ], 200);
-            }
         }
         # $keyOrCardID -> カードID (Felica端末からタッチされた場合)
         else {
+            $updateCount = $this->updateFromFelicaCardTouch($keyOrCardID);
         }
+
+        if ($updateCount < 0) {
+            # 待ち番号の状態更新中にエラーが発生した場合
+            $updateError = $updateCount;
+            switch ($updateError) {
+                case -1:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 3,
+                        'message' => 'Error: waiting_numbers array is include unrecognizable value.'
+                    ], 400);
+                case -2:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 4,
+                        'message' => 'Error: waiting_numbers array is include unexist id.'
+                    ], 400);
+                case -3:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 5,
+                        'message' => 'Error: Mutable status is one state only.'
+                    ], 400);
+                case -4:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 6,
+                        'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
+                    ], 500);
+                case -5:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 3,
+                        'message' => 'Error: A Touched Felica Card is not registered in the Database.'
+                    ], 400);
+                case -6:
+                    return response()->json([
+                        'success' => 0,
+                        'errorcode' => 4,
+                        'message' => 'Error: The Felica Card is already touched.'
+                    ], 400);
+            }
+        }
+
+        # 待ち状態状態の更新成功
+        return response()->json([
+            'success' => 1,
+            'update_count' => $updateCount,
+            'message' => 'Waiting Numbers were update complete.'
+        ], 200);
     }
 
-    private function updateFromWebApplication($UpdateWaitingNumbers) {
+    private function updateFromFelicaCardTouch(string $CardID)
+    {
+        $cardInfo = $this->getCardInfoFromCardID($CardID);
+        # タッチされたカードがDBに登録されているか？
+        if ($cardInfo === null) return -5;
         
-        $checkResult = $this->updateFormatCheck($UpdateWaitingNumbers);
+        $waitingNumber = $cardInfo->waiting_no;
+        # タッチされたカードが発行されているか？ or タッチされたカードの間のカードが発行されているか？
+        # -> 発行されていなければ強制的に発行する
+        $issueCheckResult = $this->waitingNumberIssuedCheck($waitingNumber);
+        # 待ち番号の発行に失敗したか？
+        if ($issueCheckResult < 0) return $issueCheckResult;
+
+        # 待ち番号更新用のArrayを作成
+        $updateStatusArray = $this->cardTouchUpdateArray($waitingNumber);
+        $checkResult = $this->updateFormatCheck($updateStatusArray);
         if ($checkResult < 0) return $checkResult;
-        
-        $updateCount = $this->waitnumberUpdate($UpdateWaitingNumbers);
+
+        # 待ち状態を更新
+        $updateCount = $this->waitingNumberUpdate($updateStatusArray);
+
         return $updateCount;
     }
 
-    private function updateFormatCheck($UpdateWaitingNumbers) {
-        foreach ($UpdateWaitingNumbers as $updateWaitingNumber) {
+    private function waitingNumberIssuedCheck(int $WaitingNumber)
+    {
+        $waitNumberRecords = WaitNumber::all();
+        for($wn = 1; $wn <= $WaitingNumber; $wn++) {
+            # 待ち番号が発行されているかチェック
+            $checkResult[$wn] = $this->waitingNumberExists($waitNumberRecords, $wn);
+        }
+
+        # $checkResultの結果を参照し、発行されていない待ち番号を発行する
+        for ($wn = 1; $wn <= $WaitingNumber; $wn++) {
+            if (! $checkResult[$wn]) {
+                # 待ち番号の発行に失敗した場合
+                if (! $this->issueWaitNumber($wn)) return -4;
+            }
+        }
+
+        # 既にタッチされたカードか？
+        $waitNumberRecord = WaitNumber::where('waiting_no', '=', $WaitingNumber)->get()[0];
+        if (((int)$waitNumberRecord['is_cut_now'] === 1) || ((int)$waitNumberRecord['is_cut_done'] === 1)) return -6;
+
+        return 0;
+    }
+
+    private function cardTouchUpdateArray(int $UpdateWaitingNumber)
+    {
+        $cardTouchWaitingNumberRecord = WaitNumber::where('waiting_no', '=', $UpdateWaitingNumber)->get();
+        $cutNowStatusRecord = WaitNumber::where('is_cut_now', '=', 1)->get();
+        $cutWaitStatusRecords = WaitNumber::where('is_cut_wait', '=', 1)->where('waiting_no', '<', $UpdateWaitingNumber)->get();
+        
+        # カット中の待ち番号をis_cut_doneへ変更する
+        $updateStatusCollections = $this->getUpdateStatusCollection($cutNowStatusRecord, 'is_cut_done');
+        # タッチされた待ち番号をis_cut_nowへ変更する
+        $updateStatusCollections = $updateStatusCollections->merge($this->getUpdateStatusCollection($cardTouchWaitingNumberRecord, 'is_cut_now'));
+        # タッチされた待ち番号より前の番号でis_cut_waitになっているレコードをis_cut_callへ変更する
+        $updateStatusCollections = $updateStatusCollections->merge($this->getUpdateStatusCollection($cutWaitStatusRecords, 'is_cut_call'));
+
+        return $updateStatusCollections->toArray();
+    }
+
+    private function getUpdateStatusCollection(Collection $WaitNumberRecords, string $UpdateStatus)
+    {
+        $updateStatusCollection = new Collection();
+        foreach($WaitNumberRecords as $WaitNumberRecord) {
+            # 一旦全部の状態を初期化
+            $WaitNumberRecord['is_cut_wait'] = 0;
+            $WaitNumberRecord['is_cut_done'] = 0;
+            $WaitNumberRecord['is_cut_call'] = 0;
+            $WaitNumberRecord['is_cut_now'] = 0;
+            # 引数で指定した状態フラグを上げる
+            $WaitNumberRecord[$UpdateStatus] = 1;
+            $updateStatusCollection->add($WaitNumberRecord);
+        }
+        return $updateStatusCollection;
+    }
+
+    private function waitingNumberExists(Collection $WaitNumberRecords, int $WaitingNumber)
+    {
+        # 引数として与えられた待ち番号が発行されているか？
+        foreach($WaitNumberRecords as $waitNumberRecord) {
+            if ((int)$waitNumberRecord->waiting_no === $WaitingNumber) return true;
+        }
+        return false;
+    }
+
+    private function updateFromWebApplication(array $updateStatusArray)
+    {
+        # waiting_numbersのデータチェック
+        $checkResult = $this->updateFormatCheck($updateStatusArray);
+        if ($checkResult < 0) return $checkResult;
+        
+        # $UpdateWaitingNumbersに従ってレコードを更新
+        $updateCount = $this->waitingNumberUpdate($updateStatusArray);
+        return $updateCount;
+    }
+
+    private function updateFormatCheck(array $UpdateStatusArray)
+    {
+        foreach ($UpdateStatusArray as $updateStatusItem) {
             # waiting_numbersデータに対象のキーがセットされているか？
-            if (! $this->arrayKeysExists(['id', 'is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'], $updateWaitingNumber)) return -1;
+            if (! $this->arrayKeysExists(['id', 'is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'], $updateStatusItem)) return -1;
             # 変更対象のレコードが存在するか？
-            if (WaitNumber::find($updateWaitingNumber['id']) === null) return -2;
+            if (WaitNumber::find($updateStatusItem['id']) === null) return -2;
             # 変更する待ち番号のステータスは1つだけか？
             $checkSum = 0;
-            foreach(['is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'] as $key) $checkSum += $updateWaitingNumber[$key];
+            foreach(['is_cut_wait', 'is_cut_done', 'is_cut_call', 'is_cut_now'] as $key) $checkSum += $updateStatusItem[$key];
             if ($checkSum != 1) return -3;
         }
         return 0;
     }
 
-    private function arrayKeysExists(array $CheckKeys, array $SearchArray) {
+    private function arrayKeysExists(array $CheckKeys, array $SearchArray)
+    {
+        # 引数として与えられたKey情報($CheckKeys)が確認の対象Array($SearchArray)にすべて含まれているか？
         foreach ($CheckKeys as $key) {
             if (!array_key_exists($key, $SearchArray)) return false;
         }
         return true;
     }
 
-    private function waitnumberUpdate($WaitingNumbers) {
+    private function waitingNumberUpdate(array $UpdateStatusArray)
+    {
         $updateCount = 0;
-        foreach($WaitingNumbers as $waitNumber) {
-            $target = WaitNumber::find($waitNumber['id']);
-            $target->is_cut_wait = $waitNumber['is_cut_wait'];
-            $target->is_cut_done = $waitNumber['is_cut_done'];
-            $target->is_cut_now = $waitNumber['is_cut_now'];
-            $target->is_cut_call = $waitNumber['is_cut_call'];
+        # 待ち番号の状態を更新
+        foreach($UpdateStatusArray as $updateStatusItem) {
+            $target = WaitNumber::find($updateStatusItem['id']);
+            $target->is_cut_wait = $updateStatusItem['is_cut_wait'];
+            $target->is_cut_done = $updateStatusItem['is_cut_done'];
+            $target->is_cut_now = $updateStatusItem['is_cut_now'];
+            $target->is_cut_call = $updateStatusItem['is_cut_call'];
             try {
                 $target->save();
             } catch (\Exception $e) {
