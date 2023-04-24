@@ -24,7 +24,7 @@ class WaitNumberController extends Controller
         return response()->json([
             'success' => 1,
             'wait_number' => WaitNumber::all(),
-            'message' => 'Response the ' . WaitNumber::all()->count() . ' Wait No States.'
+            'message' => 'Info: Response the ' . WaitNumber::all()->count() . ' Wait No States.'
         ], 200);
     }
 
@@ -42,8 +42,8 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 1,
-                'message' => $validator->errors()
+                'errorcode' => 'A0301',
+                'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
         
@@ -57,31 +57,31 @@ class WaitNumberController extends Controller
                 case -1:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 2,
+                        'errorcode' => 'A0302',
                         'message' => 'Error: Authorization a master_key but not registered the Felica Card.'
                     ], 400);
                 case -2:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 3,
+                        'errorcode' => 'A0303',
                         'message' => 'Error: A Touched Felica Card is not registered in the Database.'
                     ], 400);
                 case -3:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 4,
+                        'errorcode' => 'A0304',
                         'message' => 'Error: The Felica Card is already touched.'
                     ], 400);
                 case -4:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 5,
+                        'errorcode' => 'A0305',
                         'message' => 'Error: A Touched Felica Card or number card in between is not registered in the Database.'
                     ], 400);
                 default:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 6,
+                        'errorcode' => 'A0306',
                         'message' => 'Error: Failed to issue waiting number.'
                     ], 400);
             }
@@ -92,7 +92,7 @@ class WaitNumberController extends Controller
             return response()->json([
                 'success' => 1,
                 'wait_number' => WaitNumber::all(),
-                'message' => 'Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
+                'message' => 'Info: Wait No issued -- ' . WaitNumber::all()->sortByDesc('waiting_no')->first()->waiting_no
             ], 201);
         } else {
             # 待ち番号発行に失敗した場合
@@ -224,8 +224,8 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 1,
-                'message' => $validator->errors()
+                'errorcode' => 'A0308',
+                'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
         $keyOrCardID = $request->key;
@@ -239,8 +239,8 @@ class WaitNumberController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => 0,
-                    'errorcode' => 2,
-                    'message' => $validator->errors()
+                    'errorcode' => 'A0309',
+                    'message' => 'Error: ' . $validator->errors()
                 ], 400);
             }
             
@@ -258,37 +258,37 @@ class WaitNumberController extends Controller
                 case -1:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 3,
+                        'errorcode' => 'A0310',
                         'message' => 'Error: waiting_numbers array is include unrecognizable value.'
                     ], 400);
                 case -2:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 4,
+                        'errorcode' => 'A0311',
                         'message' => 'Error: waiting_numbers array is include unexist id.'
                     ], 400);
                 case -3:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 5,
+                        'errorcode' => 'A0312',
                         'message' => 'Error: Mutable status is one state only.'
                     ], 400);
                 case -4:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 6,
+                        'errorcode' => 'A0313',
                         'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
                     ], 500);
                 case -5:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 3,
+                        'errorcode' => 'A0314',
                         'message' => 'Error: A Touched Felica Card is not registered in the Database.'
                     ], 400);
                 case -6:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 4,
+                        'errorcode' => 'A0315',
                         'message' => 'Error: The Felica Card is already touched.'
                     ], 400);
             }
@@ -298,7 +298,7 @@ class WaitNumberController extends Controller
         return response()->json([
             'success' => 1,
             'update_count' => $updateCount,
-            'message' => 'Waiting Numbers were update complete.'
+            'message' => 'Info: Waiting Numbers were update complete.'
         ], 200);
     }
 
@@ -460,7 +460,8 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'message' => 'The send parameter "id" is not integer.'
+                'errorcode' => 'A0316',
+                'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
         $waitNumber = WaitNumber::all();
@@ -472,25 +473,25 @@ class WaitNumberController extends Controller
                     return response()->json([
                         'success' => 1,
                         'wait_number' => WaitNumber::all(),
-                        'message' => 'The Waiting Number ' . $number->waiting_no . ' has been deleted.'
+                        'message' => 'Info: The Waiting Number ' . $number->waiting_no . ' has been deleted.'
                     ], 200);
                 }else{
                     return response()->json([
                         'success' => 0,
-                        'message' => 'The Wait Number ID:' . $request->id . ' already deleted.'
+                        'message' => 'Info: The Wait Number ID:' . $request->id . ' already deleted.'
                     ], 200);
                 }
             } else {
                 WaitNumber::truncate();
                 return response()->json([
                     'success' => 1,
-                    'message' => 'The All Wait Number has been deleted.'
+                    'message' => 'Info: The All Wait Number has been deleted.'
                 ], 200);
             }
         } else {
             return response()->json([
                 'success' => 0,
-                'message' => 'The All Wait Number already deleted.'
+                'message' => 'Info: The All Wait Number already deleted.'
             ], 200);
         }
 

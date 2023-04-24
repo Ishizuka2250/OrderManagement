@@ -17,20 +17,21 @@ class ShopStatusController extends Controller
     public function index()
     {
         if (!ShopStatus::where('is_now_status', true)->exists()) {
+            # 現在のステータスが設定されていない場合 -> Store Close状態に設定
             $closeStatus = ShopStatus::find(1);
             $closeStatus->is_now_status = true;
             $closeStatus->save();
             return response()->json([
                 'success' => 1,
                 'status_id' => 1,
-                'message' => 'Now Shop Status is ' . $closeStatus->status_name . '.'
+                'message' => 'Info: Now Shop Status is ' . $closeStatus->status_name . '.'
             ], 200);
         }
         $changeShopStatus = ShopStatus::where('is_now_status', true)->first();
         return response()->json([
             'success' => 1,
             'status_id' => $changeShopStatus->id,
-            'message' => 'Now Shop Status is ' . $changeShopStatus->status_name . '.'
+            'message' => 'Info: Now Shop Status is ' . $changeShopStatus->status_name . '.'
         ], 200);
     }
 
@@ -65,31 +66,36 @@ class ShopStatusController extends Controller
      */
     public function update(Request $request)
     {
+        # status_idのバリデーションチェック
         $validator = Validator::make($request->all(), [
             'status_id' => ['required', 'integer'],
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 1,
-                'message' => $validator->errors()
+                'errorcode' => 'A0201',
+                'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
+        # 店の状態を取得
         $oldShopStatus = ShopStatus::where('is_now_status', true)->first();
         if ($oldShopStatus->id == $request->status_id) {
+            # 同じ状態で更新しようとした場合
             return response()->json([
                 'success' => 0,
+                'errorcode' => 'A0202',
                 'already_changed_status' => $oldShopStatus,
-                'message' => 'Shop Status already changed [' . $oldShopStatus->status_name  . ']'
-            ], 200);
+                'message' => 'Error: Shop Status already changed [' . $oldShopStatus->status_name  . ']'
+            ], 400);
         }else {
+            # 店状態を更新
             ShopStatus::where('is_now_status', true)->update(['is_now_status' => false]);
             ShopStatus::find($request->status_id)->fill(['is_now_status' => true])->save();
             $changeShopStatus = ShopStatus::where('is_now_status', true)->first();
             return response()->json([
                 'success' => 1,
                 'changed_status' => $changeShopStatus,
-                'message' => 'Shop Status changed [' . $oldShopStatus->status_name . ' -> ' . $changeShopStatus->status_name . ']'
+                'message' => 'Error: Shop Status changed [' . $oldShopStatus->status_name . ' -> ' . $changeShopStatus->status_name . ']'
             ], 200);
         }
     }
