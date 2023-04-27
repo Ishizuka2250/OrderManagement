@@ -73,7 +73,7 @@ class ShopStatusController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0201',
+                'errorcode' => 'EA0201',
                 'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
@@ -83,7 +83,7 @@ class ShopStatusController extends Controller
             # 同じ状態で更新しようとした場合
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0202',
+                'errorcode' => 'EA0202',
                 'already_changed_status' => $oldShopStatus,
                 'message' => 'Error: Shop Status already changed [' . $oldShopStatus->status_name  . ']'
             ], 400);

@@ -42,7 +42,7 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0301',
+                'errorcode' => 'EA0301',
                 'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
@@ -57,31 +57,31 @@ class WaitNumberController extends Controller
                 case -1:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0302',
+                        'errorcode' => 'EA0302',
                         'message' => 'Error: Authorization a master_key but not registered the Felica Card.'
                     ], 400);
                 case -2:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0303',
+                        'errorcode' => 'EA0303',
                         'message' => 'Error: A Touched Felica Card is not registered in the Database.'
                     ], 400);
                 case -3:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0304',
+                        'errorcode' => 'EA0304',
                         'message' => 'Error: The Felica Card is already touched.'
                     ], 400);
                 case -4:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0305',
+                        'errorcode' => 'EA0305',
                         'message' => 'Error: A Touched Felica Card or number card in between is not registered in the Database.'
                     ], 400);
                 default:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0306',
+                        'errorcode' => 'EA0306',
                         'message' => 'Error: Failed to issue waiting number.'
                     ], 400);
             }
@@ -98,7 +98,7 @@ class WaitNumberController extends Controller
             # 待ち番号発行に失敗した場合
             return response()->json([
                 'success' => 0,
-                'errorcode' => 7,
+                'errorcode' => 'EA0307',
                 'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
             ], 500);
         }
@@ -224,7 +224,7 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0308',
+                'errorcode' => 'EA0308',
                 'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
@@ -239,7 +239,7 @@ class WaitNumberController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => 0,
-                    'errorcode' => 'A0309',
+                    'errorcode' => 'EA0309',
                     'message' => 'Error: ' . $validator->errors()
                 ], 400);
             }
@@ -258,37 +258,37 @@ class WaitNumberController extends Controller
                 case -1:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0310',
+                        'errorcode' => 'EA0310',
                         'message' => 'Error: waiting_numbers array is include unrecognizable value.'
                     ], 400);
                 case -2:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0311',
+                        'errorcode' => 'EA0311',
                         'message' => 'Error: waiting_numbers array is include unexist id.'
                     ], 400);
                 case -3:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0312',
+                        'errorcode' => 'EA0312',
                         'message' => 'Error: Mutable status is one state only.'
                     ], 400);
                 case -4:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0313',
+                        'errorcode' => 'EA0313',
                         'message' => 'Error: Failed to issue Waiting Number due to the Database Server.'
                     ], 500);
                 case -5:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0314',
+                        'errorcode' => 'EA0314',
                         'message' => 'Error: A Touched Felica Card is not registered in the Database.'
                     ], 400);
                 case -6:
                     return response()->json([
                         'success' => 0,
-                        'errorcode' => 'A0315',
+                        'errorcode' => 'EA0315',
                         'message' => 'Error: The Felica Card is already touched.'
                     ], 400);
             }
@@ -460,7 +460,7 @@ class WaitNumberController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0316',
+                'errorcode' => 'EA0316',
                 'message' => 'Error: ' . $validator->errors()
             ], 400);
         }

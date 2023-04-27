@@ -16,7 +16,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0101',
+                'errorcode' => 'EA0101',
                 'message' => 'Error: ' . $validator->errors()
             ], 400);
         }
@@ -26,7 +26,7 @@ class AuthController extends Controller
         if (!Auth::once($credentials)) {
             return response()->json([
                 'success' => 0,
-                'errorcode' => 'A0102',
+                'errorcode' => 'EA0102',
                 'message' => 'Error: Unauthorized user. Please check the login credentials.'
             ], 401);
         }
