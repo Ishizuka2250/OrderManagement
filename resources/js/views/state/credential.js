@@ -2,11 +2,15 @@ import axios from "axios"
 
 const state = {
   isLogin: false,
+  masterKey: ''
 }
 
 const getters = {
   isLogin(state) {
     return state.isLogin
+  },
+  masterKey(state) {
+    return state.masterKey
   }
 }
 
@@ -18,6 +22,7 @@ const actions = {
     let accessToken = localStorage.getItem('AccessToken')
     let credential = {
       isLogin: false,
+      masterKey: '',
       accessToken: ''
     }
     if (accessToken) {
@@ -32,6 +37,7 @@ const actions = {
       if (result !== undefined) {
           if (result.data.success) {
             credential.isLogin = true
+            credential.masterKey = result.data.login_user.master_key
             credential.accessToken = accessToken
           }
       }
@@ -43,6 +49,7 @@ const actions = {
 const mutations = {
   updateLoginCredential(state, {credential}) {
     state.isLogin = credential.isLogin
+    state.masterKey = credential.masterKey
     localStorage.setItem('AccessToken', credential.accessToken)
   },
 }

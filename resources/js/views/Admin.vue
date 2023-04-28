@@ -66,6 +66,7 @@ export default {
   data() {
     return {
       shopStatus: '',
+      masterKey: '',
       cutWaitNoList: [],
       cutDoneNoList: [],
       cutCallNoList: [],
@@ -79,6 +80,7 @@ export default {
     if (this.$store.getters['cutNowNo'] !== '-') this.cutNowNoList.push(this.$store.getters['cutNowNo'])
     await this.callAPIGetShopStatus()
     this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
+    this.masterKey = this.$store.getters['masterKey']
   },
   asyncComputed: {
     async cutNow() {
@@ -300,6 +302,9 @@ export default {
         }, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          },
+          params: {
+            'key': this.masterKey
           }
         }).catch(
           (error) => {
@@ -321,6 +326,9 @@ export default {
           '/api/v1/waiting', {}, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('AccessToken')}`
+          },
+          params: {
+            'key': this.masterKey
           }
         }).catch(
           (error) => {

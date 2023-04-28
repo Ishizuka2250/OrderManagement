@@ -93,7 +93,8 @@ export default {
     async apiCallLoginCredential(email, password) {
       let credential = {
         isLogin: false,
-        accessToken: ''
+        accessToken: '',
+        masterKey: ''
       }
       let result = await axios.post(
         '/api/v1/auth/login', {
@@ -109,6 +110,7 @@ export default {
         if (result.data.success) {
           credential.isLogin = true
           credential.accessToken = result.data.access_token
+          credential.masterKey = result.data.login_user.master_key
         }
       }
       this.$store.dispatch('commitUpdateLoginCredential', {credential})
