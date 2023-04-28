@@ -95,7 +95,7 @@ class ShopStatusController extends Controller
             return response()->json([
                 'success' => 1,
                 'changed_status' => $changeShopStatus,
-                'message' => 'Error: Shop Status changed [' . $oldShopStatus->status_name . ' -> ' . $changeShopStatus->status_name . ']'
+                'message' => 'Info: Shop Status changed [' . $oldShopStatus->status_name . ' -> ' . $changeShopStatus->status_name . ']'
             ], 200);
         }
     }
