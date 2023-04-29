@@ -71,7 +71,8 @@ export default {
       cutDoneNoList: [],
       cutCallNoList: [],
       cutNowNoList: [],
-      updateWaitingNoState: []
+      updateWaitingNoState: [],
+      created: false
     }
   },
   created: async function() {
@@ -81,9 +82,11 @@ export default {
     await this.callAPIGetShopStatus()
     this.shopStatus = this.printShopStatus(this.$store.getters['shopStatus'])
     this.masterKey = this.$store.getters['masterKey']
+    this.created = true
   },
   asyncComputed: {
     async cutNow() {
+      if (!this.created) return '';
       if (this.cutNowNoList.length > 1) {
         this.cutDoneNoList.push(this.cutNowNoList.shift())
         if (this.cutDoneNoList.indexOf('-') !== -1) {
@@ -92,7 +95,8 @@ export default {
         }
       }else if (this.cutNowNoList.length === 0) {
         this.cutNowNoList.push('-')
-        await this.updateShopStatus(3)
+        await this.callAPIGetShopStatus()
+        if (this.$store.getters['shopStatus'] != 3) await this.updateShopStatus(3)
         this.removeEmptyNumber()
       }
       this.sortCutWait()
