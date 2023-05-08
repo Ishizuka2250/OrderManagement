@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WaitNumberController;
 use App\Http\Controllers\Api\ShopStatusController;
+use App\Http\Controllers\Api\CardRegistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,4 +27,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::patch('/v1/waiting', [WaitNumberController::class, 'update']);
     Route::delete('/v1/waiting', [WaitNumberController::class, 'destroy']);
     Route::patch('/v1/status', [ShopStatusController::class, 'update']);
+    Route::get('/v1/card', [CardRegistController::class, 'index']);
+    Route::post('/v1/card', [CardRegistController::class, 'store']);
 });
