@@ -28,15 +28,18 @@ class CardRegistController extends Controller
         }
         $key = $request->key;
         if (empty($key)) {
+            $cardInformation = CardInformation::all();
             return response()->json([
                 'success' => 1,
-                'card_information' => CardInformation::all(),
-                'message' => 'Info: Response the ' . CardInformation::all()->count() . ' card information.'
+                'count' => $cardInformation->count(),
+                'card_information' => $cardInformation,
+                'message' => 'Info: Response the ' . $cardInformation->count() . ' card information.'
             ]);
         } else {
             $cardInformation = CardInformation::where('idm', '=', $key)->get();
             return response()->json([
                 'success' => 1,
+                'count' => $cardInformation->count(),
                 'card_information' => $cardInformation,
                 'message' => 'Info: Response the ' . $cardInformation->count() . ' card information.'
             ]);
