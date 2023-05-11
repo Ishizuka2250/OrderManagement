@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CardInformation;
 use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\Null_;
 
 class CardRegistController extends Controller
 {
@@ -24,7 +25,7 @@ class CardRegistController extends Controller
                 'success' => 0,
                 'errorcode' => 'EA0401',
                 'message' => 'Error: ' . $validator->errors()
-            ]);
+            ], 400);
         }
         $key = $request->key;
         if (empty($key)) {
@@ -34,7 +35,7 @@ class CardRegistController extends Controller
                 'count' => $cardInformation->count(),
                 'card_information' => $cardInformation,
                 'message' => 'Info: Response the ' . $cardInformation->count() . ' card information.'
-            ]);
+            ], 200);
         } else {
             $cardInformation = CardInformation::where('idm', '=', $key)->get();
             return response()->json([
@@ -42,7 +43,7 @@ class CardRegistController extends Controller
                 'count' => $cardInformation->count(),
                 'card_information' => $cardInformation,
                 'message' => 'Info: Response the ' . $cardInformation->count() . ' card information.'
-            ]);
+            ], 200);
         }
     }
 
@@ -62,7 +63,7 @@ class CardRegistController extends Controller
                 'success' => 0,
                 'errorcode' => 'EA0402',
                 'message' => 'Error: ' . $validator->errors()
-            ]);
+            ], 400);
         }
 
         $key = $request->key;
@@ -71,14 +72,14 @@ class CardRegistController extends Controller
                 'success' => 0,
                 'errorcode' => 'EA0403',
                 'message' => 'Error: The Felica Card is already registed in the Database.'
-            ]);
+            ], 400);
         }
         
-        $waiting_no = $this->createCardInformation($key);
-        if ($waiting_no  > 0) {
+        $cardInformation = $this->createCardInformation($key);
+        if (!is_null($cardInformation)) {
             return response()->json([
                 'success' => 1,
-                'wait_number' => $waiting_no,
+                'card_information' => $cardInformation,
                 'message' => 'Info: The Felica Card has registed in the Database.'
             ], 201);
         } else {
@@ -93,20 +94,25 @@ class CardRegistController extends Controller
     public function createCardInformation(string $Key) {
         $waiting_no = $this->getNewWaitingNumber();
         try {
-            CardInformation::create([
+            $createdCardInformation = CardInformation::create([
                 'waiting_no' => $waiting_no,
                 'idm' => $Key,
                 'available' => 1
             ]);
         }catch (\Exception $e) {
-            return -1;
+            return null;
         }
-        return $waiting_no;
+        return $createdCardInformation;
     }
 
     public function getNewWaitingNumber() {
-        # waiting_no の最大値 + 1 を新しい待ち番号として返却
-        return CardInformation::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
+        $cardInformationCollection = CardInformation::all();
+        if ($cardInformationCollection->count() > 0) {
+            # waiting_no の最大値 + 1 を新しい待ち番号として返却
+            return CardInformation::all()->sortByDesc('waiting_no')->first()->waiting_no + 1;
+        } else {
+            return 1;
+        }
     }
 
     /**
